@@ -20,13 +20,13 @@ try
         I(1)+round(tMarkers(2)*Fech)];
     
     %% Vitesse maximale à la fin du 1er APA
-    [Trial_Res_APA.Vm(1,1) ind] = max(Trial_APA.CG_Speed.Data(1,round(tMarkers(3)*Fech):round(tMarkers(6)*Fech)-10));
+    [Trial_Res_APA.Vm(1,1) ind] = max(Trial_APA.CG_Speed.Data(1,round(tMarkers(3)*Fech):round(tMarkers(6)*Fech)));
     Trial_Res_APA.Vm(1,2) = round(tMarkers(3)*Fech) + ind;
     
     %% Vitesse verticale minimale pendant les APA
     [Trial_Res_APA.VZmin_APA(1,1) Trial_Res_APA.VZmin_APA(1,2)] = min(Trial_APA.CG_Speed.Data(3,1:round(tMarkers(4)*Fech)));
     %% Vitesse minimale pendant l'éxecution du pas
-    [Trial_Res_APA.V1(1) ind] = min(Trial_APA.CG_Speed.Data(3,round(tMarkers(3)*Fech):round(tMarkers(5)*Fech-10)));
+    [Trial_Res_APA.V1(1) ind] = min(Trial_APA.CG_Speed.Data(3,round(tMarkers(3)*Fech):round(tMarkers(5)*Fech)));
     Trial_Res_APA.V1(2) = ind + round(tMarkers(3)*Fech);
     
     %% Vitesse verticale lors du foot-contact
