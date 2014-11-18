@@ -11,12 +11,12 @@ try
     
     %% Valeur minimale du CP en antéropostérieur (APAy)
     [C,I] = min(Trial_APA.CP_Position.Data(1,round(tMarkers(2)*Fech):round(tMarkers(3)*Fech)));
-    Trial_Res_APA.APAy(1:2) = [mean(Trial_APA.CP_Position.Data(1,round(tMarkers(1)*Fech):round(tMarkers(2)*Fech))) - C I(1)+round(tMarkers(2)*Fech)-1];
+    Trial_Res_APA.APAy(1:2) = [mean(Trial_APA.CP_Position.Data(1,round(tMarkers(1)*Fech+1):round(tMarkers(2)*Fech))) - C I(1)+round(tMarkers(2)*Fech)-1];
     
     %% Déplacement latéral max du CP lors des APA (APAy_lat)
     %% Valeur minimale du CP en antéropostérieur (APAy)
     [C,I] = max(sign(Trial_APA.CP_Position.Data(2,round(tMarkers(2)*Fech)) - Trial_APA.CP_Position.Data(2,round(tMarkers(4)*Fech)))*(Trial_APA.CP_Position.Data(2,round(tMarkers(2)*Fech):round(tMarkers(3)*Fech)) - Trial_APA.CP_Position.Data(2,round(tMarkers(2)*Fech))));
-    Trial_Res_APA.APAy_lateral(1:2) = [abs(mean(Trial_APA.CP_Position.Data(2,round(tMarkers(1)*Fech):round(tMarkers(2)*Fech))) - Trial_APA.CP_Position.Data(2,I(1)+round(tMarkers(2)*Fech)-1))...
+    Trial_Res_APA.APAy_lateral(1:2) = [abs(mean(Trial_APA.CP_Position.Data(2,round(tMarkers(1)*Fech+1):round(tMarkers(2)*Fech))) - Trial_APA.CP_Position.Data(2,I(1)+round(tMarkers(2)*Fech)-1))...
         I(1)+round(tMarkers(2)*Fech)];
     
     %% Vitesse maximale à la fin du 1er APA

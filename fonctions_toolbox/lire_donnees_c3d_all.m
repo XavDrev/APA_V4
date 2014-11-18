@@ -126,27 +126,27 @@ if nb_plat~=0
     
 end
 
-%% Modif AMine pour extraire EMG (et autres signaux analogiques)
-channels_all = fieldnames(av);
-list_non_pf = ~sum(compare_liste(channels_pf,channels_all),1);
-channels_anlg = channels_all(list_non_pf);
-[channels_emg channels_anlg]= extraire_emgs_liste(channels_anlg);
-cc = 1; cc_a = 1;
-if ~isempty(channels_emg) || ~isempty(channels_anlg)
-    for e=1:length(channels_all)
-        if sum(compare_liste(channels_all(e),channels_emg))
-            FICH.EMG.nom(cc) = channels_all(e);
-            FICH.EMG.valeurs(:,cc) = av.(cell2mat(channels_all(e)));
-            FICH.EMG.Fech = btkGetAnalogFrequency(h);
-            cc = cc+1;
-        elseif sum(compare_liste(channels_all(e),channels_anlg))
-            FICH.ANLG.nom(cc_a) = channels_all(e);
-            FICH.ANLG.valeurs(:,cc_a) = av.(cell2mat(channels_all(e)));
-            FICH.ANLG.Fech = btkGetAnalogFrequency(h);
-            cc_a = cc_a+1;
-        end
-    end
-end
+% %% Modif AMine pour extraire EMG (et autres signaux analogiques)
+% channels_all = fieldnames(av);
+% list_non_pf = ~sum(compare_liste(channels_pf,channels_all),1);
+% channels_anlg = channels_all(list_non_pf);
+% [channels_emg channels_anlg]= extraire_emgs_liste(channels_anlg);
+% cc = 1; cc_a = 1;
+% if ~isempty(channels_emg) || ~isempty(channels_anlg)
+%     for e=1:length(channels_all)
+%         if sum(compare_liste(channels_all(e),channels_emg))
+%             FICH.EMG.nom(cc) = channels_all(e);
+%             FICH.EMG.valeurs(:,cc) = av.(cell2mat(channels_all(e)));
+%             FICH.EMG.Fech = btkGetAnalogFrequency(h);
+%             cc = cc+1;
+%         elseif sum(compare_liste(channels_all(e),channels_anlg))
+%             FICH.ANLG.nom(cc_a) = channels_all(e);
+%             FICH.ANLG.valeurs(:,cc_a) = av.(cell2mat(channels_all(e)));
+%             FICH.ANLG.Fech = btkGetAnalogFrequency(h);
+%             cc_a = cc_a+1;
+%         end
+%     end
+% end
 
 %% Réechantillonage a la plus petite des fréquences (?)
 % try
