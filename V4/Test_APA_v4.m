@@ -42,7 +42,6 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
 %% Test_APA_v4_OpeningFcn -Funcion principale
 % --- Executes just before Test_APA_v4 is made visible.
 function Test_APA_v4_OpeningFcn(hObject, eventdata, handles, varargin)
