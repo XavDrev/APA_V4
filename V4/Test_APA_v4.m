@@ -1187,7 +1187,6 @@ try
     h_marks_APAy1 = plot(haxes1,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy(2)),APA.Trial(pos).CP_Position.Data(1,ResAPA.Trial(pos).APAy(2)),'x','Markersize',11);
     h_marks_APAy2 = plot(haxes2,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy_lateral(2)),APA.Trial(pos).CP_Position.Data(2,ResAPA.Trial(pos).APAy_lateral(2)),'x','Markersize',11);
 catch NO_APA
-    disp('Calcul automatique des APA AP et ML non réalisé');
 end
 
 try
@@ -1259,6 +1258,7 @@ for i=1:length(param)
         CR{i,2} = Acq.(param{i})(1);
     end
 end
+
 set(findobj('tag','Results'),'Data',CR);
 
 %% Calc_batch_Callback - Calculs des APA sur toutes les acquisitions
