@@ -2486,6 +2486,8 @@ for i_acq = 1 : length(liste_acq)
 end
 cd(path);
 
+
+
 %% Export format commun traitemetn du signal
 function export_format_commun(hObject, eventdata, handles)
 
