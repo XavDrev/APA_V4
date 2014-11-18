@@ -2485,6 +2485,8 @@ for i_acq = 1 : length(liste_acq)
 end
 cd(path);
 
+
+
 %% Export format commun traitemetn du signal
 function export_format_commun(hObject, eventdata, handles)
 
@@ -2630,7 +2632,6 @@ if iscell(files)
 else
     nb_acq =1;
 end
-
 % initialisation
 myFile = files{1}(1:end-4);
 ind_tag = find(myFile=='_');
