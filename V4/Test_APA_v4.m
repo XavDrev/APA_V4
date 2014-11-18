@@ -2631,7 +2631,6 @@ if iscell(files)
 else
     nb_acq =1;
 end
-
 % initialisation
 myFile = files{1}(1:end-4);
 ind_tag = find(myFile=='_');
