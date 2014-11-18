@@ -1393,8 +1393,7 @@ acqs = liste_marche(ind_acq);
 try
     for i = 1:length(acqs)
         tags = extract_tags(acqs{i});
-        
-        
+                
         if ~strcmp(tags(end),'KO')
             endFC2 = round(TrialParams.Trial(ind_acq(i)).EventsTime(7)*(APA.Trial(ind_acq(i)).CP_Position.Fech));
             try
