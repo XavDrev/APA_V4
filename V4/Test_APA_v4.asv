@@ -1392,7 +1392,8 @@ acqs = liste_marche(ind_acq);
 try
     for i = 1:length(acqs)
         tags = extract_tags(acqs{i});
-                
+        
+        
         if ~strcmp(tags(end),'KO')
             endFC2 = round(TrialParams.Trial(ind_acq(i)).EventsTime(7)*(APA.Trial(ind_acq(i)).CP_Position.Fech));
             try
@@ -2455,7 +2456,7 @@ for i_acq = 1 : length(liste_acq)
             num = str2double(liste_acq{i_acq}(end-cpt:end));
         end
         num = ['0' num2str(num)];
-        ind_num = matchcells2(liste_files,{['_' num(end-1:end)]});
+        ind_num = matchcells2(liste_files{:}(end-11:end-4),{num(end-1:end)});
         num_file = intersect(intersect(ind_marche,ind_trait),ind_num);
         nom_fich = liste_files{num_file};
         acq = btkReadAcquisition(fullfile(chemin_c3d,nom_fich));
