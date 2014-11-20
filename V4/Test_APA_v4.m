@@ -44,7 +44,7 @@ end
 % End initialization code - DO NOT EDIT
 %% Test_APA_v4_OpeningFcn -Funcion principale
 % --- Executes just before Test_APA_v4 is made visible.
-function Test_APA_v4_OpeningFcn(hObject, eventdata, handles, varargin)
+function Test_APA_v4_OpeningFcn(hObject, ~, handles, varargin)
 global haxes1 haxes2 haxes3 haxes4 haxes6 h_marks_T0 h_marks_HO h_marks_TO h_marks_FC1 h_marks_FO2 h_marks_FC2 Resultats
 % Funcion principale (Interface)
 % This function has no output args, see OutputFcn.
@@ -100,8 +100,10 @@ set(findobj('tag','V_der_Vic'),'Value',0); %Dérivation (vicon)
 h = uimenu('Parent',hObject,'Label','FILE','Tag','menu_fichier','handlevisibility','On') ;
 h1= uimenu(h,'Label','NOUVEAU SUJET','handlevisibility','on') ;
 uimenu(h1,'Label','Charger acquisitions','Callback',@uipushtool1_ClickedCallback);
-uimenu(h1,'Label','Charger dossier','Callback',@uipushtool2_ClickedCallback) ;
-
+h2 = uimenu(h,'Label','SUJET COURANT','handlevisibility','on','Tag','sujet_courant','Enable','off') ;
+uimenu(h2,'Label','Ajouter acquistions','Callback',@ajouter_acquisitions) ; %% Ajouter modif' pour ajout .xls
+uimenu(h2,'Label','Ajouter sous-dossier','Callback',@ajouter_dossier) ; %% Ajouter modif' pour ajout .xls
+uimenu(h2,'Label','Ajouter .mat prétraité','Callback',@ajouter_mat) ;
 uimenu(h,'Label','CHARGER SUJET','handlevisibility','On','Callback',@uipushtool4_ClickedCallback) ; %% uipushtool4_ClickedCallback(findobj('tag','uipushtool4'), eventdata, handles))
 uimenu(h,'Label','DONNEES SUJET','handlevisibility','On','Tag','subject_info','Callback',@subject_info,'Enable','off') ;
 
@@ -131,7 +133,7 @@ uimenu(e,'Label','Export evts -> c3d','Callback',@export_events);
 uimenu(e,'Label','Export format commun','Callback',@export_format_commun);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = Test_APA_v4_OutputFcn(hObject, eventdata, handles)
+function varargout = Test_APA_v4_OutputFcn(~, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -140,11 +142,11 @@ function varargout = Test_APA_v4_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-
 %% listbox1_Callback - Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 % Choix/Click dans la liste actualisée
-global haxes1 haxes2 haxes3 haxes4 haxes6 APA TrialParams ResAPA liste_marche acq_courante flag_afficheV Notocord Resultats
+global haxes1 haxes2 haxes3 haxes4 haxes6 APA TrialParams ResAPA liste_marche acq_courante ...
+    flag_afficheV Notocord
 % hObject    handle to listbox1 (see GCBO)
 
 %Récupération de l'acquisition séléctionnée
@@ -182,11 +184,8 @@ flagPF=get(findobj('tag','PlotPF'),'Value');
 if ~flagPF
     set(findobj('Tag','Acc_txt'),'String','Accélération/Puissance CG');
     xlabel(haxes6,'Temps (s)','FontName','Times New Roman','FontSize',10);
-    try
-        plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
-        ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
-    catch Err
-    end
+    plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
+    ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
 else
     set(findobj('Tag','Acc_txt'),'String','Trajectoire CP');
     xlabel(haxes6,'Axe Antéropostérieur(mm)','FontName','Times New Roman','FontSize',10);
@@ -200,28 +199,14 @@ flags_V = [get(findobj('tag','V_intgr'),'Value') get(findobj('tag','V_der'),'Val
 flag_afficheV = sum(flags_V); %Flag d'affichage
 
 % Extraction des maximas/minimas pour affichage des vitesses dans la bonne échelle
+Fech = APA.Trial(pos).CP_Position.Fech;
+T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech);
+FC2 = round(TrialParams.Trial(pos).EventsTime(7)*Fech);
 
-try
-    Fech = APA.Trial(pos).CP_Position.Fech;
-    T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech)-10;
-    FC2 = round(TrialParams.Trial(pos).EventsTime(7)*Fech);
-catch
-    T0 = 100;
-    FC2 = round(length(APA.Trial(pos).CP_Position.Data(1,:))/2); % Au pif
-end
-
-
-try
-    Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,T0:FC2+10))*1.25;
-    Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,T0:FC2+10))*1.25;
-    Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,T0:FC2+10))*1.25;
-    Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,T0:FC2+10))*1.25;
-catch
-    Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,:));
-    Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,:));
-    Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,:));
-    Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,:));
-end
+Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
+Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
+Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
+Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
 
 t = APA.Trial(pos).CG_Speed.Time;
 Fin = length(t);
@@ -231,124 +216,51 @@ switch flag_afficheV
         plot(haxes4,t,zeros(1,length(t)),'Color','w');
     case 1
         if flags_V(2) %Courbes dérivées
-            try
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
-            catch err_size
-                t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d.Data(1,:)):end);
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,:),'r-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,:),'r-');
-            end
+            plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
+            plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         elseif flags_V(3) %Courbes dérivées
-            try
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            catch err_size
-                t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d_VIC.Data(1,:)):end);
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            end
+            plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
+            plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         else %Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
-            
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         end
     case 2 % 2 courbes sur 3
         if flags_V(2) %Courbes dérivées
-            try
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
-            catch err_size
-                t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d.Data(1,:)):end);
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,:),'r-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,:),'r-');
-            end
+            plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
+            plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(3) %Courbes dérivées
-            try
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            catch err_size
-                t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d_VIC.Data(1,:)):end);
-                plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-                plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            end
+            plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
+            plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(1)%Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
-            
-            try
-                set(haxes3,'ylim',[Min_AP Max_AP]);
-                set(haxes4,'ylim',[Min_Z Max_Z]);
-            catch
-                axis(haxes3,'tight');
-                axis(haxes4,'tight');
-            end
+            set(haxes3,'ylim',[Min_AP Max_AP]);
+            set(haxes4,'ylim',[Min_Z Max_Z]);
         end
-        
-        
     case 3 %Les 3
-        
         plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
         plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
-        
-        try
-            plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
-            plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
-        catch err_size
-            t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d.Data(1,:)):end);
-            plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,:),'r-');
-            plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,:),'r-');
-        end
-        
-        try
-            plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-            plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-        catch err_size
-            t = t(1:length(t)/length(APA.Trial(pos).CG_Speed_d_VIC.Data(1,:)):end);
-            plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-            plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-        end
+        plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
+        plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
+        plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
+        plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
         
         afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
         set(haxes3,'ylim',[min([Min_AP Min_AP_D]) max([Max_AP Max_AP_D])]);
@@ -366,10 +278,12 @@ if get(findobj('tag','Automatik_display'),'Value') %% Si bouton Affichage automa
         try
             affiche_resultat_APA(ResAPA.Trial(pos));
         catch ERR
-            disp(['Aucun calcul réalisé ' acq_courante]);
+            warning(ERR.identifier,['Aucun calcul réalisé ' acq_courante ' / ' ERR.message]);
         end
     end
 end
+
+Affich_corridor_Callback;
 
 set(haxes1,'XTick',NaN);
 set(haxes2,'XTick',NaN);
@@ -400,18 +314,8 @@ set(findobj('tag','Delete_current'),'Enable','On');
 %Bouton de sauvegarde
 set(findobj('tag','uipushtool3'),'Enable','On');
 
-% %Export Triggers
-% if isfield(Sujet.(acq_courante),'Trigger')
-%     set(findobj('tag','Export_trigs'),'Enable','On');
-%     set(findobj('tag','menu_lfp'),'Enable','On');
-% else
-%     set(findobj('tag','Export_trigs'),'Enable','Off');
-%     set(findobj('tag','menu_lfp'),'Enable','Off');
-% end
-
 %% listbox1_CreateFcn - Création de la liste
-% --- Executes during object creation, after setting all properties.
-function listbox1_CreateFcn(hObject, eventdata, handles)
+function listbox1_CreateFcn(hObject, ~, ~)
 % Création de la liste
 % hObject    handle to listbox1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -424,8 +328,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 %% togglebutton1_Callback - Activation des boutton de Zoom/Translation
-% --- Executes on button press in togglebutton1.
-function togglebutton1_Callback(hObject, eventdata, handles)
+function togglebutton1_Callback(hObject, ~, ~)
 % Activation des boutton de Zoom/Translation
 % hObject    handle to togglebutton1 (see GCBO)
 % Hint: get(hObject,'Value') returns toggle state of togglebutton1
@@ -441,8 +344,7 @@ else
 end
 
 %% uipushtool1_ClickedCallback - Charger acquisition
-% --------------------------------------------------------------------
-function uipushtool1_ClickedCallback(hObject, eventdata, handles)
+function uipushtool1_ClickedCallback(~, ~, ~)
 % Choix fichier(s) (simple/multiple)
 % hObject    handle to uipushtool1 (see GCBO)
 global dossier_c3d APA TrialParams ResAPA Resultats Corridors Subject_data liste_marche Notocord
@@ -491,11 +393,7 @@ try
     end
     
     %Mise à jour de la liste
-    try
-        set(findobj('tag','listbox1'), 'Value',1);
-    catch ERR
-        disp('Liste non existante');
-    end
+    set(findobj('tag','listbox1'), 'Value',1);
     liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
     set(findobj('tag','listbox1'),'String',liste_marche);
     
@@ -505,120 +403,98 @@ try
         set(findobj('tag','Calc_batch'), 'Enable','On');
     end
     
-    %     set(findobj('tag','Visu_EMG'), 'Visible','On');
-    %     set(findobj('tag','visu_lfp'), 'Visible','On');
-    %     set(findobj('tag','Visu_multiple'), 'Visible','On');
+catch ERR_Charg
+    warning(ERR_Charg.identifier,['Annulation chargement fichiers / ',ERR_Charg.message])
+    waitfor(warndlg('Annulation chargement fichiers!'));
     
-    %     if ~isempty(EMG)
-    %         set(findobj('tag','Visu_EMG'), 'Enable','On');
-    %         set(findobj('tag','Visu_multiple'), 'Enable','On');
-    %     end
+end
+
+%% ajouter_acquisitions - Ajouter des acquisitions au sujet en cour de traitement
+% --- Ajout acquisitions au sujet courant
+function ajouter_acquisitions(~, ~, ~)
+% Ajouter des acquisitions au sujet en cour de traitement
+global dossier_c3d APA TrialParams ResAPA liste_marche 
+
+try
+    %Choix manuel des fichiers
+    [files dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
+    
+    
+    %Extraction des données d'intérêts
+    button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
+    [APA_add TrialParams_add ResAPA_add]= Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
+    
+    % On modifie le nom des acquisitions/fields similaires
+    liste_new = arrayfun(@(i) APA_add.Trial(i).CP_Position.TrialName, 1:length(APA_add.Trial),'uni',0);
+    
+    [~,b,~] = matchcells(liste_marche,liste_new,'exact');
+    if any(b==1)
+        for i = 1 : length(b)
+            if b(i)==1
+                warning(['Attention acquisition en double / Données non chargées pour :' APA_add.Trial(i).CP_Position.TrialName])
+            end
+        end
+    end
+%     liste_new = liste_new(b==0);
+    APA_add.Trial = APA_add.Trial(b==0);
+    TrialParams_add.Trial = TrialParams_add.Trial(b==0);
+    ResAPA_add.Trial = ResAPA_add.Trial(b==0);
+    APA.Trial = [APA.Trial , APA_add.Trial];
+    ResAPA.Trial = [ResAPA.Trial , ResAPA_add.Trial];
+    TrialParams.Trial = [TrialParams.Trial , TrialParams_add.Trial];
+    num_Trial = arrayfun(@(i) APA.Trial(i).CP_Position.TrialNum,1:length(APA.Trial));
+    [~,ind_tri] = sort(unique(num_Trial));
+    APA.Trial = APA.Trial(ind_tri);
+    ResAPA.Trial = ResAPA.Trial(ind_tri);
+    TrialParams.Trial = TrialParams.Trial(ind_tri);
+    
+    set(findobj('tag','listbox1'), 'Value',1);
+    liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
+    set(findobj('tag','listbox1'),'String',liste_marche);
     
 catch ERR
+    ERR_Charg
+    warning(ERR_Charg.identifier,['Annulation chargement fichiers / ',ERR_Charg.message])
     waitfor(warndlg('Annulation chargement fichiers!'));
 end
 
-%% uipushtool2_ClickedCallback - charger dossier
-% --------------------------------------------------------------------
-function uipushtool2_ClickedCallback(hObject, eventdata, handles)
-% Choix dossier (directory)
-% hObject handle to uipushtool2 (see GCBO)
-global APA TrialParams ResAPA liste_marche Notocord
-
-try
-    %Choix du dossier et extraction de la liste des fichiers existants
-    dossier = uigetdir(pwd,'Repertoire de stockage des acquisitions du sujet') ;
-    list_rep= dir(dossier) ;
-    list_rep(1) = [];
-    list_rep(1) = [];
-    path = cd;
-    cd(dossier)
-    % Extraction des fichiers et donnéers utiles
-    A = dir('*.c3d');
-    files = {A(:).name};
-    cd(path)
-    %Extraction des données d'intérêts
-    button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
-    [APA TrialParams ResAPA] = Data_Preprocessing(files,dossier,button_cut);
-    
-    % Mise à jour interface et activation des boutons
-    set(findobj('tag','listbox1'), 'Visible','On');
-    liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
-    set(findobj('tag','listbox1'),'String',liste_marche);
-    set(findobj('tag','togglebutton1'),'Visible','On');
-    set(findobj('tag','AutoScale'),'Visible','On');
-    set(findobj('tag','Multiplot'),'Visible','On');
-    set(findobj('tag','APA_auto'),'Visible','On');
-    set(findobj('tag','Automatik_display'),'Visible','On');
-    set(findobj('tag','Results'), 'Visible','Off');
-    set(findobj('tag','Results'), 'Data',zeros(30,1));
-    
-    set(findobj('Tag','sujet_courant'),'Enable','On');
-    set(findobj('Tag','subject_info'),'Enable','On');
-    set(findobj('Tag','Delete_current'),'Visible','On');
-    set(findobj('tag','Export_trigs'), 'Visible','On');
-    set(findobj('tag','PlotPF'), 'Visible','On');
-    Notocord =0; %% Chargement de fichiers brut d'acquisitions  et non de fichiers pré-traités
-    
-    %Activation des axes
-    axess = findobj('Type','axes');
-    for i=1:length(axess)
-        set(axess(i),'Visible','On');
-    end
-    
-    if length(files)>1
-        set(findobj('tag','Group_APA'), 'Enable','On');
-        set(findobj('tag','Clean_data'), 'Enable','On');
-        set(findobj('tag','Calc_batch'), 'Enable','On');
-    end
-    
-    %Mise à jour de la liste
-    try
-        set(findobj('tag','listbox1'), 'Value',1);
-    catch ERR
-        disp('Liste non existante');
-    end
-    
-catch ERR
-    waitfor(warndlg('Annulation chargement dossier'));
-end
-
 %% axes1_CreateFcn - Executes during object creation, after setting all properties.
-function axes1_CreateFcn(hObject, eventdata, handles)
+function axes1_CreateFcn(hObject, ~, ~)
 global haxes1
 % hObject    handle to axes1 (see GCBO)
 haxes1 = hObject;
 delete(get(haxes1,'Children'));
+
 %% axes2_CreateFcn - Executes during object creation, after setting all properties.
-function axes2_CreateFcn(hObject, eventdata, handles)
+function axes2_CreateFcn(hObject, ~, ~)
 global haxes2
 % hObject    handle to axes2 (see GCBO)
 haxes2 = hObject;
 delete(get(haxes2,'Children'));
+
 %% axes3_CreateFcn - Executes during object creation, after setting all properties.
-function axes3_CreateFcn(hObject, eventdata, handles)
+function axes3_CreateFcn(hObject, ~, ~)
 global haxes3
 % hObject    handle to axes2 (see GCBO)
 haxes3 = hObject;
 delete(get(haxes3,'Children'));
+
 %% axes4_CreateFcn - Executes during object creation, after setting all properties.
-function axes4_CreateFcn(hObject, eventdata, handles)
+function axes4_CreateFcn(hObject, ~, ~)
 global haxes4
 % hObject    handle to axes2 (see GCBO)
 haxes4 = hObject;
 delete(get(haxes4,'Children'));
 
 %% axes6_CreateFcn
-% --- Executes during object creation, after setting all properties.
-function axes6_CreateFcn(hObject, eventdata, handles)
+function axes6_CreateFcn(hObject, ~, ~)
 global haxes6
 % hObject    handle to axes2 (see GCBO)
 haxes6 = hObject;
 delete(get(haxes6,'Children'));
 
-% --------------------------------------------------------------------
 %% uipushtool4_ClickedCallback - Chargement d'un fichier deja traité
-function uipushtool4_ClickedCallback(hObject, eventdata, handles)
+function uipushtool4_ClickedCallback(~, ~, ~)
 % Chargement d'un fichier deja traité
 global APA ResAPA TrialParams liste_marche acq_courante
 
@@ -629,13 +505,13 @@ try
     TrialParams = {};
     
     [var dossier] = uigetfile('*_APA.mat','Choix du fichier APA à charger');
-    if ischar(var)               
+    if ischar(var)
         eval(['load ' fullfile(dossier,var)]);
-        eval(['APA = ' var(1:end-4)]);
+        eval(['APA = ' var(1:end-4) ';']);
         eval(['load ' strrep(fullfile(dossier,var),'APA','ResAPA')]);
-        eval(['ResAPA = ' strrep(var(1:end-4),'APA','ResAPA')]);
+        eval(['ResAPA = ' strrep(var(1:end-4),'APA','ResAPA') ';']);
         eval(['load ' strrep(fullfile(dossier,var),'APA','TrialParams')]);
-        eval(['TrialParams = ' strrep(var(1:end-4),'APA','TrialParams')])  ;     
+        eval(['TrialParams = ' strrep(var(1:end-4),'APA','TrialParams') ';'])  ;
     end
     
     % Mise à jour interface et activation des boutons
@@ -671,55 +547,29 @@ try
         set(axess(i),'Visible','On');
         set(axess(i),'NextPlot','new');
     end
-    
-%     % On demande d'afficher uniquement les courbes moyennes sur la liste?
-%     if ~isempty(Corridors) && ~isempty(liste_actuelle)
-%         button = questdlg('Choix des acquisitions à charger sur la liste?','Mise à jour liste','Tous','Corridors','Dernier','Dernier');
-%         switch button
-%             case 'Corridors'
-%                 set(findobj('tag','listbox1'), 'String',fieldnames(Corridors));
-%             case 'Tous'
-%                 set(findobj('tag','listbox1'), 'String',fieldnames(Sujet));
-%             otherwise
-%                 set(findobj('tag','listbox1'), 'String',liste_actuelle);
-%         end
-%         set(findobj('tag','Affich_corridor'), 'Enable','On');
-%         set(findobj('tag','Corridors_add'), 'Enable','On');
-%         set(findobj('tag','Clean_corridor'), 'Visible','On');
-%         set(findobj('tag','Clean_corridor'), 'Enable','On');
-%     else
-%         %     set(findobj('tag','listbox1'), 'String',liste_actuelle);
-%         set(findobj('tag','listbox1'), 'String',fieldnames(Sujet));
-%         set(findobj('tag','Affiche_corridor'), 'Enable','Off');
-%         set(findobj('tag','Clean_corridor'), 'Enable','Off');
-%     end
 catch ERR
-    disp('Annulation chargement');
+    error(['Annulation chargement / ' ERR.message]);
 end
 
 %% uipushtool3_ClickedCallback -Sauvegarde d'un fichier en cours
-% --------------------------------------------------------------------
-function uipushtool3_ClickedCallback(hObject, eventdata, handles)
+function uipushtool3_ClickedCallback(~, ~, ~)
 % Sauvegarde d'un fichier en cours
 % hObject    handle to uipushtool3 (see GCBO)
-global APA TrialParams ResAPA 
+global APA TrialParams ResAPA
 
 chemin = uigetdir();
 eval([APA.Infos.FileName '_APA = APA;'])
-nom_fich = fullfile(chemin,[APA.Infos.FileName '_APA.mat']);
-eval(['save(nom_fich,''' APA.Infos.FileName '_APA'');'])
+eval(['save(fullfile(chemin,[APA.Infos.FileName ''_APA.mat'']),''' APA.Infos.FileName '_APA'');'])
 eval([APA.Infos.FileName '_ResAPA = ResAPA;'])
-nom_fich = fullfile(chemin,[ResAPA.Infos.FileName '_ResAPA.mat']);
-eval(['save(nom_fich,''' ResAPA.Infos.FileName '_ResAPA'');'])
+eval(['save(fullfile(chemin,[ResAPA.Infos.FileName ''_ResAPA.mat'']),''' ResAPA.Infos.FileName '_ResAPA'');'])
 eval([APA.Infos.FileName '_TrialParams = TrialParams;'])
-nom_fich = fullfile(chemin,[TrialParams.Infos.FileName '_TrialParams.mat']);
-eval(['save(nom_fich,''' TrialParams.Infos.FileName '_TrialParams'');'])
+eval(['save(fullfile(chemin,[TrialParams.Infos.FileName ''_TrialParams.mat'']),''' TrialParams.Infos.FileName '_TrialParams'');'])
 
 % Export Excel
 button = questdlg('Exporter sur Excel??','Sauvegarde résultats','Oui','Non','Non');
 if strcmp(button,'Oui')
     fichier = [ResAPA.Infos.FileName '_ResAPA.xlsx'];
-    champs = fieldnames(ResAPA.Trial(1));    
+    champs = fieldnames(ResAPA.Trial(1));
     Tab.tag(1,:) = [champs(end-2:end-1);champs(1:end-3)]';
     for i = 1 : length(ResAPA.Trial)
         Tab.tag(i+1,1) = {ResAPA.Trial(i).TrialName};
@@ -735,10 +585,8 @@ else
     warndlg('Attention données non exportées!');
 end
 
-
 %% AutoScale_Callback - Remise à l'échelle
-% --- Executes on button press in AutoScale.
-function AutoScale_Callback(hObject, eventdata, handles)
+function AutoScale_Callback(~, ~, ~)
 % Remise à l'échelle
 % hObject    handle to AutoScale (see GCBO)
 axess = findobj('Type','axes');
@@ -747,12 +595,10 @@ for i=1:length(axess)
 end
 
 %% T0_Callback - Choix T0 (1er évt Biomécanique)
-% --- Executes on button press in T0.
-function T0_Callback(hObject, eventdata, handles)
+function T0_Callback(~, eventdata, handles)
 % Choix T0 (1er évt Biomécanique)
-global haxes3 haxes4 APA Res_APA TrialParams liste_marche acq_courante h_marks_T0
+global haxes3 haxes4 APA TrialParams liste_marche acq_courante h_marks_T0
 % hObject    handle to T0 (see GCBO)
-
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
     Manual_click = ginput(1);
@@ -760,48 +606,38 @@ else
     Manual_click = myginput(1,'crosshair');
 end
 TrialParams.Trial(pos).EventsTime(2) = Manual_click(1);
-
 efface_marqueur_test(h_marks_T0);
 h_marks_T0=affiche_marqueurs(Manual_click(1),'-r');
-
-[C,I] = min(abs(APA.Trial(pos).CG_Speed.Time - TrialParams.Trial(pos).EventsTime(2)));
+[~,I] = min(abs(APA.Trial(pos).CG_Speed.Time - TrialParams.Trial(pos).EventsTime(2)));
 APA.Trial(pos).CG_Speed.Data(3,:) = APA.Trial(pos).CG_Speed.Data(3,:) - APA.Trial(pos).CG_Speed.Data(3,I);
 ch = get(haxes4,'children');
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(3,:));
-
 APA.Trial(pos).CG_Speed.Data(1,:) = APA.Trial(pos).CG_Speed.Data(1,:) - APA.Trial(pos).CG_Speed.Data(1,I);
 ch = get(haxes3,'children');
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(1,:));
-
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% HO_Callback - Choix HO (Heel-Off)
-% --- Executes on button press in HO.
-function HO_Callback(hObject, eventdata, handles)
+function HO_Callback(~, eventdata, handles)
 % Choix HO (Heel-Off)
 global TrialParams liste_marche acq_courante h_marks_HO
 % hObject    handle to HO (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
-
 if ~ismac
     Manual_click = ginput(1);
 else
     Manual_click = myginput(1,'crosshair');
 end
 TrialParams.Trial(pos).EventsTime(3) = Manual_click(1);
-
 efface_marqueur_test(h_marks_HO);
 h_marks_HO=affiche_marqueurs(Manual_click(1),'-k');
-
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% TO_Callback - Choix TO (Toe-Off)
-% --- Executes on button press in TO.
-function TO_Callback(hObject, eventdata, handles)
+function TO_Callback(~, eventdata, handles)
 % Choix TO (Toe-Off)
-
 global TrialParams liste_marche acq_courante h_marks_TO h_marks_Vy_FO1
 % hObject    handle to TO (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
@@ -812,30 +648,14 @@ else
     Manual_click = myginput(1,'crosshair');
 end
 TrialParams.Trial(pos).EventsTime(4) = Manual_click(1);
-
 efface_marqueur_test(h_marks_TO);
 efface_marqueur_test(h_marks_Vy_FO1);
 h_marks_TO=affiche_marqueurs(Manual_click(1),'-b');
-
-% % Choix sur la courbe intégrée ou dérivée
-% if get(findobj('tag','V_intgr'),'Value')
-%     Vy_FO1 = Sujet.(acq_courante).V_CG_AP(ind);
-% else
-%     try
-%         Vy_FO1 = Sujet.(acq_courante).V_CG_AP_d(ind);
-%     catch ERR
-%         warndlg('Veuillez cocher une courbe de vitesse!!');
-%         Vy_FO1 = Sujet.(acq_courante).V_CG_AP(ind);
-%     end
-% end
-% h_marks_Vy_FO1 = plot(haxes3,Sujet.(acq_courante).t(ind),Vy_FO1,'x','Markersize',11);
-
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% Choix FC1 - FC1_Callback
-% --- Executes on button press in FC1.
-function FC1_Callback(hObject, eventdata, handles)
+function FC1_Callback(~, eventdata, handles)
 % Choix FC1 (Foot-Contact du pied oscillant)
 global haxes4 APA TrialParams liste_marche acq_courante h_marks_FC1 h_marks_V2
 % hObject    handle to FC1 (see GCBO)
@@ -847,10 +667,8 @@ else
 end
 TrialParams.Trial(pos).EventsTime(5) = Manual_click(1);
 ind = find(APA.Trial(pos).CG_Speed.Time>= Manual_click(1),1,'first') - 1;
-
 efface_marqueur_test(h_marks_FC1);
 efface_marqueur_test(h_marks_V2);
-
 h_marks_FC1=affiche_marqueurs(Manual_click(1),'-m');
 % Choix sur la courbe intégrée ou dérivée
 if get(findobj('tag','V_intgr'),'Value')
@@ -860,18 +678,16 @@ else
         V2 = APA.Trial(pos).CG_Speed_d.Data(3,ind);
     catch ERR
         warndlg('Veuillez cocher une courbe de vitesse!!');
+        warning(ERR.identifier,['Veuillez cocher une courbe de vitesse / ' ERR.message])
         V2 = APA.Trial(pos).CG_Speed.Data(3,ind);
     end
 end
-
 h_marks_V2 = plot(haxes4,APA.Trial(pos).CG_Speed.Time(ind),V2,'x','Markersize',11);
-
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% FO2_Callback - Choix FO2
-% --- Executes on button press in FO2.
-function FO2_Callback(hObject, eventdata, handles)
+function FO2_Callback(~, eventdata, handles)
 % Choix FO2 (Foot-Off du pied d'appui)
 global TrialParams liste_marche acq_courante h_marks_FO2
 % hObject    handle to FO2 (see GCBO)
@@ -890,8 +706,7 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% FC2_Callback -  Choix FC2
-% --- Executes on button press in FC2.
-function FC2_Callback(hObject, eventdata, handles)
+function FC2_Callback(~, eventdata, handles)
 % Choix FC2 (Foot-Contact du pied d'appui)
 global TrialParams liste_marche acq_courante h_marks_FC2
 % hObject    handle to FC2 (see GCBO)
@@ -910,10 +725,9 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% yAPA_AP_Callback - Detection manuelle du déplacement postérieur max du CP lors des APA
-% --- Executes on button press in yAPA_AP.
-function yAPA_AP_Callback(hObject, eventdata, handles)
+function yAPA_AP_Callback(~, eventdata, handles)
 % Detection manuelle du déplacement postérieur max du CP lors des APA
-global  ResAPA APA TrialParams liste_marche acq_courante 
+global  ResAPA APA TrialParams liste_marche acq_courante
 % hObject    handle to yAPA_AP (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 set(findobj('tag','APA_auto'),'Value',0)
@@ -932,9 +746,8 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% yAPA_ML_Callback - Detection valeur minimale/maximale du déplacement médiolatéral du CP lors des APA
-% --- Executes on button press in yAPA_ML.
-function yAPA_ML_Callback(hObject, eventdata, handles)
-global  ResAPA APA TrialParams liste_marche acq_courante 
+function yAPA_ML_Callback(~, eventdata, handles)
+global  ResAPA APA TrialParams liste_marche acq_courante
 % Detection valeur minimale/maximale du déplacement médiolatéral du CP lors des APA
 % hObject    handle to yAPA_ML (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
@@ -955,8 +768,7 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% Vy_FO1_Callback - Détection manuelle de la Vitesse AP du CG lors de FO1
-% --- Executes on button press in Vy_FO1.
-function Vy_FO1_Callback(hObject, eventdata, handles)
+function Vy_FO1_Callback(~, ~, ~)
 % Détection manuelle de la Vitesse AP du CG lors de FO1
 % global haxes3 Sujet acq_courante h_marks_Vy_FO1
 % pos = matchcells(liste_marche,{acq_courante});
@@ -970,7 +782,7 @@ function Vy_FO1_Callback(hObject, eventdata, handles)
 %         Manual_click = myginput(1,'crosshair');
 %     end
 %     ind = find(Sujet.(acq_courante).t >= Manual_click(1),1,'first') - 1;
-%     
+%
 %     efface_marqueur_test(h_marks_Vy_FO1);
 %     Vy_FO1 = Sujet.(acq_courante).V_CG_AP_d(ind);
 %     h_marks_Vy_FO1 = plot(haxes3,Sujet.(acq_courante).t(ind),Vy_FO1,'x','Markersize',11);
@@ -984,11 +796,10 @@ function Vy_FO1_Callback(hObject, eventdata, handles)
 waitfor(warndlg('VyFO1 dépend de TO!!'));
 
 %% Vm_Callback - Détection manuelle Vitesse max AP du CG
-% --- Executes on button press in Vm.
-function Vm_Callback(hObject, eventdata, handles)
+function Vm_Callback(~, eventdata, handles)
 % Détection manuelle Vitesse max AP du CG
 % hObject    handle to Vm (see GCBO)
-global  ResAPA APA  liste_marche acq_courante 
+global  ResAPA APA  liste_marche acq_courante
 pos = matchcells(liste_marche,{acq_courante});
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
@@ -1006,8 +817,9 @@ else
     try
         Vm = APA.Trial(pos).CG_Speed_d.Data(1,ind);
     catch ERR
+        warning(ERR.identifier,['Veuillez cocher une courbe de vitesse!!' ERR.message])
         waitfor(warndlg('Veuillez cocher une courbe de vitesse!!'));
-        Vm = APA.Trial(pos).CG_Speed.Data(1,ind)
+        Vm = APA.Trial(pos).CG_Speed.Data(1,ind);
     end
 end
 
@@ -1018,10 +830,9 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% Vmin_APA_Callback - Détection manuelle Vitesse min verticale du CG lors des APA
-% --- Executes on button press in Vmin_APA.
-function Vmin_APA_Callback(hObject, eventdata, handles)
+function Vmin_APA_Callback(~, eventdata, handles)
 % Détection manuelle Vitesse min verticale du CG lors des APA
-global  ResAPA APA  liste_marche acq_courante 
+global  ResAPA APA  liste_marche acq_courante
 % hObject    handle to Vmin_APA (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 set(findobj('tag','APA_auto'),'Value',0)
@@ -1039,7 +850,8 @@ else
     try
         Vmin_APA = APA.Trial(pos).CG_Speed_d.Data(3,ind);
     catch ERR
-        waitfor(warndlg('Veuillez cocher une courbe de vitesse!!'));
+        warning(ERR.identifier,['Veuillez cocher une courbe de vitesse!!' ERR.message])
+        waitfor(warndlg(['Veuillez cocher une courbe de vitesse!!' ERR]));
         Vmin_APA = APA.Trial(pos).CG_Speed.Data(3,ind);
     end
 end
@@ -1051,10 +863,9 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% V1_Callback - Détection manuelle du 1er min de la Vitesse vertciale du CG lors de l'éxecution du pas
-% --- Executes on button press in V1.
-function V1_Callback(hObject, eventdata, handles)
+function V1_Callback(~, eventdata, handles)
 % Détection manuelle du 1er min de la Vitesse vertciale du CG lors de l'éxecution du pas
-global ResAPA APA  liste_marche acq_courante 
+global ResAPA APA  liste_marche acq_courante
 % hObject    handle to V1 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 set(findobj('tag','APA_auto'),'Value',0)
@@ -1072,7 +883,8 @@ else
     try
         V1 = APA.Trial(pos).CG_Speed_d.Data(3,ind);
     catch ERR
-        waitfor(warndlg('Veuillez cocher une courbe de vitesse!!'));
+        warning(ERR.identifier,['Veuillez cocher une courbe de vitesse!!' ERR.message])
+        waitfor(warndlg(['Veuillez cocher une courbe de vitesse!!' ERR]));
         V1 = APA.Trial(pos).CG_Speed.Data(3,ind);
     end
 end
@@ -1084,10 +896,9 @@ Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
 
 %% V2_Callback - Détection manuelle de la Vitesse vertciale du CG lors du FC1
-% --- Executes on button press in V2.
-function V2_Callback(hObject, eventdata, handles)
+function V2_Callback(~, ~, ~)
 % Détection manuelle de la Vitesse vertciale du CG lors du FC1
-global ResAPA APA  liste_marche acq_courante 
+% global ResAPA APA  liste_marche acq_courante
 % Choix sur la courbe dérivée
 % if get(findobj('tag','V_der'),'Value')
 %     if ~ismac
@@ -1097,7 +908,7 @@ global ResAPA APA  liste_marche acq_courante
 %     end
 %     %ind = round(Manual_click(1)*Sujet.(acq_courante).Fech)+1;
 %     ind = find(Sujet.(acq_courante).t >= Manual_click(1),1,'first') - 1;
-%     
+%
 %     efface_marqueur_test(h_marks_V2);
 %     V2 = Sujet.(acq_courante).V_CG_Z_d(ind);
 %     h_marks_V2 = plot(haxes4,Sujet.(acq_courante).t(ind),V2,'x','Markersize',11,'Color','m','Linewidth',1.5);
@@ -1111,8 +922,7 @@ global ResAPA APA  liste_marche acq_courante
 waitfor(warndlg('V2 dépend de FC1!!'));
 
 %% Markers_Callback - Affichage des marqueurs de l'acquisition courante/sélectionnée
-% --- Executes on button press in Markers.
-function Markers_Callback(hObject, eventdata, handles)
+function Markers_Callback(~, ~, ~)
 % Affichage des marqueurs de l'acquisition courante/sélectionnée
 global haxes1 TrialParams liste_marche acq_courante h_marks_T0 h_marks_HO h_marks_TO h_marks_FC1 h_marks_FO2 h_marks_FC2  ...
     h_marks_Trig h_trig_txt h_marks_FOG h_FOG_txt
@@ -1160,8 +970,7 @@ set(findobj('tag','FO2'),'Visible','On');
 set(findobj('tag','FC2'),'Visible','On');
 
 %% Vitesses_Callback - Affichage des pics de Vitesse déjà calculés
-% --- Executes on button press in Vitesses.
-function APA_Vitesses_Callback(hObject, eventdata, handles)
+function APA_Vitesses_Callback(~, ~, ~)
 % Affichage des pics de Vitesse déjà calculés
 global haxes1 haxes2 haxes3 haxes4 APA ResAPA liste_marche acq_courante h_marks_APAy1 h_marks_APAy2 h_marks_Vy_FO1 h_marks_Vm h_marks_VZ_min h_marks_V1 h_marks_V2
 % hObject    handle to Vitesses (see GCBO)
@@ -1187,31 +996,37 @@ try
     h_marks_APAy1 = plot(haxes1,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy(2)),APA.Trial(pos).CP_Position.Data(1,ResAPA.Trial(pos).APAy(2)),'x','Markersize',11);
     h_marks_APAy2 = plot(haxes2,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy_lateral(2)),APA.Trial(pos).CP_Position.Data(2,ResAPA.Trial(pos).APAy_lateral(2)),'x','Markersize',11);
 catch NO_APA
+    warning(NO_APA.identifier,['NO_APA' NO_APA.message])
 end
 
 try
     h_marks_Vy_FO1 = plot(haxes3,APA.Trial(pos).CG_Speed.Time(round(ResAPA.Trial(pos).Vy_FO1(2))),ResAPA.Trial(pos).Vy_FO1(1),'x','Markersize',11);
-catch ERr_FO1
+catch ERR_FO1
+    warning(ERR_FO1.identifier,['ERR_FO1' ERR_FO1.message])
 end
 
 try
     h_marks_Vm = plot(haxes3,APA.Trial(pos).CG_Speed.Time(ResAPA.Trial(pos).Vm(2)),ResAPA.Trial(pos).Vm(1),'x','Markersize',11,'Color','r','Linewidth',1.5);
-catch ERr_Vm
+catch ERR_Vm
+    warning(ERR_Vm.identifier,['ERR_Vm' ERR_Vm.message])
 end
 
 try
     h_marks_VZ_min = plot(haxes4,APA.Trial(pos).CG_Speed.Time(ResAPA.Trial(pos).VZmin_APA(2)),ResAPA.Trial(pos).VZmin_APA(1),'x','Markersize',11,'Color','k');
-catch ERr_Vz_min
+catch ERR_Vz_min
+    warning(ERR_Vz_min.identifier,['ERR_Vz_min' ERR_Vz_min.message])
 end
 
 try
     h_marks_V1 = plot(haxes4,APA.Trial(pos).CG_Speed.Time(ResAPA.Trial(pos).V1(2)),ResAPA.Trial(pos).V1(1),'x','Markersize',11,'Color','r','Linewidth',1.25);
-catch ERr_V1
+catch ERR_V1
+    warning(ERR_V1.identifier,['ERR_V1' ERR_V1.message])
 end
 
 try
     h_marks_V2 = plot(haxes4,APA.Trial(pos).CG_Speed.Time(ResAPA.Trial(pos).V2(2)),ResAPA.Trial(pos).V2(1),'x','Markersize',11,'Color','m','Linewidth',1.5);
-catch ERr_V2
+catch ERR_V2
+    warning(ERR_V2.identifier,['ERR_V2' ERR_V2.message])
 end
 
 %Activation des bouton de modification manuelle des vitesses
@@ -1227,8 +1042,7 @@ set(findobj('tag','V_der_Vic'),'Visible','On');
 set(findobj('tag','V_intgr'),'Visible','On');
 
 %% Calc_current_Callback - Calculs des APA sur l'acquisition selectionnée
-% --- Executes on button press in Calc_current.
-function Calc_current_Callback(hObject, eventdata, handles)
+function Calc_current_Callback(~, ~, ~)
 % Calculs des APA sur l'acquisition selectionnée
 % hObject    handle to Calc_current (see GCBO)
 global APA ResAPA TrialParams liste_marche acq_courante
@@ -1240,30 +1054,29 @@ if get(findobj('tag','APA_auto'),'Value')
 end
 ResAPA.Trial(pos) = calculs_parametres_initiationPas_v4(APA.Trial(pos),TrialParams.Trial(pos),ResAPA.Trial(pos));
 %Affichage
-Current_Res = affiche_resultat_APA(ResAPA.Trial(pos));
+affiche_resultat_APA(ResAPA.Trial(pos));
 
 function CR = affiche_resultat_APA(Acq)
 %% Mise à jour des resultats sur le tableau d'affichage
-CR={};
+
 % if isfield(Acq,'primResultats') %% Si les calculs n'ont pas été
 %     Acq = calculs_parametres_initiationPas_v1(Acq);
 % end
 
 param = fieldnames(Acq);
+CR=cell(length(param),2);
 for i=1:length(param)
     CR{i,1} = param{i};
-    if isstr(Acq.(param{i}))
+    if ischar(Acq.(param{i}))
         CR{i,2} = Acq.(param{i});
     elseif isnumeric(Acq.(param{i}))
         CR{i,2} = Acq.(param{i})(1);
     end
 end
-
 set(findobj('tag','Results'),'Data',CR);
 
 %% Calc_batch_Callback - Calculs des APA sur toutes les acquisitions
-% --- Executes on button press in Calc_batch.
-function Calc_batch_Callback(hObject, eventdata, handles)
+function Calc_batch_Callback(~, ~, ~)
 % Calculs des APA sur toutes les acquisitions
 % hObject    handle to Calc_batch (see GCBO)
 global APA ResAPA TrialParams liste_marche
@@ -1274,20 +1087,19 @@ set(wb,'Name','Please wait... Calculating data');
 
 for i=1:length(liste_marche)
     waitbar(i/length(liste_marche),wb,['Calcul acquisition: ' liste_marche{i}]);
-        try
-            if get(findobj('tag','APA_auto'),'Value')
-                ResAPA.Trial(i) = calcul_auto_APA_marker(APA.Trial(i),TrialParams.Trial(i),ResAPA.Trial(i));
-            end
-            ResAPA.Trial(i) = calculs_parametres_initiationPas_v4(APA.Trial(i),TrialParams.Trial(i),ResAPA.Trial(i));
-        catch No_data
-            disp(['Erreur calcul: ' liste_marche{i}]);
+    try
+        if get(findobj('tag','APA_auto'),'Value')
+            ResAPA.Trial(i) = calcul_auto_APA_marker(APA.Trial(i),TrialParams.Trial(i),ResAPA.Trial(i));
         end
+        ResAPA.Trial(i) = calculs_parametres_initiationPas_v4(APA.Trial(i),TrialParams.Trial(i),ResAPA.Trial(i));
+    catch No_data
+        warning(No_data.identifier,['Erreur calcul : ' liste_marche{i} ' / ' No_data.message])
+    end
 end
 close(wb);
 
 %% V_der_Callback - Etat d'affichage de la vitesse obtenue par dérivation
-% --- Executes on button press in V_der.
-function V_der_Callback(hObject, eventdata, handles)
+function V_der_Callback(hObject, ~, ~)
 % Etat d'affichage de la vitesse obtenue par dérivation
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_der (see GCBO)
@@ -1309,8 +1121,7 @@ if get(hObject,'Value')
 end
 
 %% V_der_VICON_Callback - Etat d'affichage de la vitesse obtenue par dérivation pour le CG de VICON
-% --- Executes on button press in V_der_Vic.
-function V_der_VICON_Callback(hObject, eventdata, handles)
+function V_der_VICON_Callback(hObject, ~, ~)
 % Etat d'affichage de la vitesse obtenue par dérivation pour le CG de VICON
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_der (see GCBO)
@@ -1332,8 +1143,7 @@ if get(hObject,'Value')
 end
 
 %% V_intgr_Callback - Etat d'affichage de la vitesse obtenue par intégration
-% --- Executes on button press in V_intgr.
-function V_intgr_Callback(hObject, eventdata, handles)
+function V_intgr_Callback(hObject, ~, ~)
 % Etat d'affichage de la vitesse obtenue par intégration
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_intgr (see GCBO)
@@ -1355,17 +1165,16 @@ if get(hObject,'Value')
 end
 
 %% Clean_data_Callback - Nettoyage des données en éliminant manuellement les mauvaises acquisitions
-% --- Executes on button press in Clean_data.
-function Clean_data_Callback(hObject, eventdata, handles)
+function Clean_data_Callback(~, ~, ~)
 % Nettoyage des données en éliminant manuellement les mauvaises acquisitions
-global APA Res_APA TrialParams liste_marche clean
+global APA TrialParams liste_marche clean
 % hObject    handle to Clean_data (see GCBO)
 
 %Extraction des acquisitions sur la liste
 % listes_acqs = filednames(Sujet);
 
 %Sélections de l'utilisateur
-[ind_acq,v] = listdlg('PromptString',{'Nettoyage données','Choix des acquisitions à vérifier'},...
+[ind_acq,~] = listdlg('PromptString',{'Nettoyage données','Choix des acquisitions à vérifier'},...
     'ListSize',[300 300],...
     'ListString',liste_marche);
 
@@ -1392,7 +1201,7 @@ acqs = liste_marche(ind_acq);
 try
     for i = 1:length(acqs)
         tags = extract_tags(acqs{i});
-                
+        
         if ~strcmp(tags(end),'KO')
             endFC2 = round(TrialParams.Trial(ind_acq(i)).EventsTime(7)*(APA.Trial(ind_acq(i)).CP_Position.Fech));
             try
@@ -1401,6 +1210,7 @@ try
                 plot(h3,APA.Trial(ind_acq(i)).CG_Speed.Data(1,1:endFC2),'ButtonDownFcn',@maselection,'uicontextmenu',c,'displayname',acqs{i});
                 plot(h4,APA.Trial(ind_acq(i)).CG_Speed.Data(3,1:endFC2),'ButtonDownFcn',@maselection,'uicontextmenu',c,'displayname',acqs{i});
             catch FC2_far
+                warning(FC2_far.identifier,FC2_far.message)
                 plot(h1,APA.Trial(ind_acq(i)).CP_Position.Data(1,:),'ButtonDownFcn',@maselection,'uicontextmenu',c,'displayname',acqs{i});
                 plot(h2,APA.Trial(ind_acq(i)).CP_Position.Data(2,:),'ButtonDownFcn',@maselection,'uicontextmenu',c,'displayname',acqs{i});
                 plot(h3,APA.Trial(ind_acq(i)).CG_Speed.Data(1,:),'ButtonDownFcn',@maselection,'uicontextmenu',c,'displayname',acqs{i});
@@ -1411,741 +1221,168 @@ try
     %On retire les mauvaises acquisitions de la variable Sujet et on remet à jour la liste et la variable Resultats
     msgbox('Cliquez sur les courbes/acquisitions à retirer (click droit pour déséléctionner) - puis appuyer sur OK');
 catch ERR
-    warndlg('!!Une seule acquisition chargée!!');
+    warning(ERR.identifier,['Une seule acquisition chargée / ' ERR.message])
+    warndlg(['!!Une seule acquisition chargée!!' ERR]);
 end
 
 %% Automatik_display_Callback
-% --- Executes on button press in Automatik_display.
-function Automatik_display_Callback(hObject, eventdata, handles)
+function Automatik_display_Callback(~, ~, ~)
 % hObject    handle to Automatik_display (see GCBO)
 % Hint: get(hObject,'Value') returns toggle state of Automatik_display
 
 %% Test_APA_v4_ResizeFcn
-% --- Executes when Test_APA_v4 is resized.
-function Test_APA_v4_ResizeFcn(hObject, eventdata, handles)
+function Test_APA_v4_ResizeFcn(~, ~, ~)
 % hObject    handle to Test_APA_v4 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 %% Group_APA_Callback - Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
-% --- Executes on button press in Group_APA.
-function Group_APA_Callback(hObject, eventdata, handles)
+function Group_APA_Callback
 % Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
-global APA ResAPA TrialParams  Corridors
+global APA liste_marche Corridors corr1
 % hObject    handle to Group_APA (see GCBO)
 
-%Extraction des acquisitions
-button = questdlg('Choisir parmis toutes les acquisitions (Oui)?, ou celles de la liste (Non)?','Calcul corridor','Oui','Non','Non');
-if strcmp(button,'Oui') % On affiche le corridor dans une nouvelle fenêtre de visualisation de l'interface
-    listes_acqs = fieldnames(Sujet);
-else
-    listes_acqs = cellstr(get(findobj('tag','listbox1'),'String'));
-end
-
 %Choix du nom de la moyenne
-groupe_acqs = cell2mat(inputdlg('Entrez le nom du groupe d''acquisitions','Calcul corridor Moyen'));
+tag_groupe = cell2mat(inputdlg('Entrez le nom du groupe d''acquisitions','Calcul corridor Moyen',1,{APA.Infos.FileName}));
 
 %Sélections de l'utilisateur
 try
-    [acqs,v] = listdlg('PromptString',{strcat('Group ',groupe_acqs),'Choix des acquisitions à inclure dans le group'},...
-        'ListSize',[300 300],...
-        'ListString',listes_acqs);
     
-    %Stockage des acquisitions choisies dans une structure équivalente
-    Group_data={};
-    Moy_data={};
-    Group_emg={};
-    Activation_emg={};
-    Group_lfp={};
-    Side = {};
-    
-    for i=1:length(acqs)
-        tags = extract_tags(listes_acqs{acqs(i)});
-        if ~strcmp(tags(end),'KO') && ~isfield(Corridors,listes_acqs{acqs(i)}) %% Retire les acquisitions 'KO' (NOtocord) et Corridors
-            
-            Group_data.(listes_acqs{acqs(i)}) = Sujet.(listes_acqs{acqs(i)});
-            try
-                Group_emg.(listes_acqs{acqs(i)}) = EMG.(listes_acqs{acqs(i)});
-            catch ErrEMG
-                disp(['Pas d''EMGs pour l''acquisition: ' listes_acqs{acqs(i)}]);
-            end
-            
-            try
-                Group_lfp.(listes_acqs{acqs(i)}) = LFP.(listes_acqs{acqs(i)}); % Pour la visu (données réechantillonés à Freq_vis)
-                Group_lfp_raw.(listes_acqs{acqs(i)}) = LFP_raw.(listes_acqs{acqs(i)}); % Données brut durant l'essai
-                Group_lfp_base.(listes_acqs{acqs(i)}) = LFP_base.(listes_acqs{acqs(i)}); % Données baseline
-            catch ErrLFP
-                disp(['Pas de LFPs pour l''acquisition: ' listes_acqs{acqs(i)}]);
-            end
-            
-            if ~isfield(Resultats,listes_acqs{acqs(i)}) % Calculs des paramètres si non effectués
-                disp(['Calculs acquisition ' listes_acqs{acqs(i)}]);
-                if Notocord
-                    Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_Not(Sujet.(listes_acqs{acqs(i)}),Resultats.(listes_acqs{acqs(i)}));
-                else
-                    Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_v1(Sujet.(listes_acqs{acqs(i)}));
-                end
-            end
-            
-            try
-                Side{i} = Resultats.(listes_acqs{acqs(i)}).Cote; %Extraction Coté
-                tagss = extract_tags(listes_acqs{acqs(i)});
-                Cnd{i} = tagss{3}; %Extraction Condition de Marche
-            catch isNotocord
-                Side{i} = Resultats.(listes_acqs{acqs(i)}).Pied;
-                Cnd{i} = Resultats.(listes_acqs{acqs(i)}).Condition;
-            end
-            
-            try
-                if isfield(Activation_EMG_percycle,listes_acqs{acqs(i)}) % Moyenneage des activations EMG (si existent)
-                    % Rassembler les periodes d'activation EMG
-                    Activation_emg.(listes_acqs{acqs(i)}) = Activation_EMG_percycle.(listes_acqs{acqs(i)});
-                else
-                    disp(['Pas d''activations EMG pour l''acquisition: ' listes_acqs{acqs(i)}]);
-                end
-            catch ERR
-                disp('Pas de calcul moyen EMG');
-            end
-            
-            Moy_data.(listes_acqs{acqs(i)}) = Resultats.(listes_acqs{acqs(i)});
+    Corridors.Infos = APA.Infos;
+    Corridors.removedTrials = [];
+    champs = fieldnames(APA.Trial(1));
+    for i_champs = 1 : length(champs)
+        clear Data_moy temp
+        max_nSamp = max(arrayfun(@(i) size(APA.Trial(i).(champs{i_champs}).Data,2),1:length(liste_marche)));
+        temp = arrayfun(@(i) cat(2,APA.Trial(i).(champs{i_champs}).Data,nan(size(APA.Trial(i).(champs{i_champs}).Data,1),max_nSamp - size(APA.Trial(i).(champs{i_champs}).Data,2))),...
+            1:length(liste_marche),'uni',0);
+        Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
+        Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
+        Data_moy(:,:,3) = nanmean(cat(3,temp{:}),3) - nanstd(cat(3,temp{:}),[],3);
+        
+        %Stockage
+        for j = 1:3
+            Corridors.Trial(j).(champs{i_champs}) = Signal(Data_moy(:,:,j),APA.Trial(1).(champs{i_champs}).Fech,...
+                'tag',APA.Trial(1).(champs{i_champs}).Tag,...
+                'units',APA.Trial(1).(champs{i_champs}).Units,...
+                'TrialNum',0,...
+                'TrialName',tag_groupe);
         end
     end
     
-
-    
-    
-    %Calcul du corridor et des resultats moyens
-    [Res_moy Res_group Ecarts_res] = regroupe_acquisitions(Moy_data);
-    % [Acq_moy Data_group Ecarts_acqs] = regroupe_acquisitions_v2(Group_norm);
-    butTri = questdlg('Trier par condition?','Tri automatique','Oui','Non','Non');
-    if strcmp(butTri,'Oui')
-        choixC = inputdlg({'Condition à sélectionner?'},'Choix TRi',1);
-        choixC = cell2mat(choixC);
-        [Acq_moy Data_group Ecarts_acqs] = regroupe_acquisitions_v3Not(Group_norm,Side,Cnd,choixC);
-    else
-        [Acq_moy Data_group Ecarts_acqs] = regroupe_acquisitions_v4(Group_norm,Side);
-    end
-    
-    %Stockage
-    Corridors.(groupe_acqs) = Data_group;
-    Sujet.(groupe_acqs) = Acq_moy;
-    Resultats.(groupe_acqs) = Res_moy;
-        
     %Affichage
     set(findobj('tag','Affich_corridor'), 'Visible','On');
     set(findobj('tag','Affich_corridor'), 'Enable','On');
     set(findobj('tag','Corridors_add'), 'Enable','On');
     set(findobj('tag','Clean_corridor'), 'Visible','On');
     set(findobj('tag','Clean_corridor'), 'Enable','On');
-    button = questdlg('Afficher corridor ?','Affichage interface','Oui','Non','Non');
-    if strcmp(button,'Oui') % On affiche le corridor dans une nouvelle fenêtre de visualisation de l'interface
-        Affich_corridor_Callback(findobj('tag','Affich_corridor'), groupe_acqs);
-    end
-    
-    % On demande si on veut supprimer les acquisitions
-    button = questdlg('Retirer les acquisitions du groupe de la liste ?','Réduction de la liste','Oui','Non','Non');
-    listes_acqs = [listes_acqs;groupe_acqs];
-    if strcmp(button,'Oui') % On supprime uniquement de la liste les acquisitions qui ont été prises dans les groupe
-        listes_acqs(acqs,:)=[];
-    end
-    set(findobj('tag','listbox1'), 'Value',1);
-    set(findobj('tag','listbox1'),'String',listes_acqs);
+    set(findobj('tag','Affich_corridor'), 'Value',1);
+    corr1 = 200;
+    Affich_corridor_Callback;
     
 catch ERR
-    warndlg('Arret création groupe');
-end
-
-%% Corridors_add - Ajout d'acquisition(s) à un corridor existant
-function Corridors_add(hObject, eventdata, handles)
-% Ajout d'acquisition(s) à un corridor existant
-global Sujet Resultats Corridors Activation_EMG_percycle Notocord EMG Corridors_EMG
-% hObject    handle to Corridors_add (see GCBO)
-try
-    %Choix du corridors
-    listes_grp = fieldnames(Corridors);
-    %Sélections de l'utilisateur
-    [i,v] = listdlg('PromptString',{'Choix du corridor à incrémenter'},...
-        'ListSize',[300 300],...
-        'ListString',listes_grp);
-    
-    groupe_acqs = cell2mat(listes_grp(i));
-    
-    listes_acqs = fieldnames(Sujet);
-    [acqs,v] = listdlg('PromptString',{strcat('Group ',groupe_acqs),'Choix des acquisitions à ajouter dans le corridor'},...
-        'ListSize',[300 300],...
-        'ListString',listes_acqs);
-    
-    %Stockage des acquisitions choisies dans une structure équivalente
-    Group_data={};
-    Moy_data={};
-    Group_emg={};
-    Activation_emg={};
-    for i=1:length(acqs)
-        Group_data.(listes_acqs{acqs(i)}) = Sujet.(listes_acqs{acqs(i)});
-        try
-            Group_emg.(listes_acqs{acqs(i)}) = EMG.(listes_acqs{acqs(i)});
-        catch ErrEMG
-            disp(['Pas d''EMGs pour l''acquisition: ' listes_acqs{acqs(i)}]);
-        end
-        
-        if ~isfield(Resultats,listes_acqs{acqs(i)}) % Calculs des paramètres si non effectués
-            disp(['Calculs groupe ' listes_acqs{acqs(i)}]);
-            if Notocord
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_Not(Sujet.(listes_acqs{acqs(i)}),Resultats.(listes_acqs{acqs(i)}));
-            else
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_v1(Sujet.(listes_acqs{acqs(i)}));
-            end
-        end
-        
-        try
-            if isfield(Activation_EMG_percycle,listes_acqs{acqs(i)}) % Moyenneage des activations EMG (si existent)
-                % Rassembler les periodes d'activation EMG
-                Activation_emg.(listes_acqs{acqs(i)}) = Activation_EMG_percycle.(listes_acqs{acqs(i)});
-            else
-                disp(['Pas d''activations EMG pour l''acquisition: ' listes_acqs{acqs(i)}]);
-            end
-        catch ERR
-            disp('Pas de calcul moyen EMG');
-        end
-        
-        Moy_data.(listes_acqs{acqs(i)}) = Resultats.(listes_acqs{acqs(i)});
-    end
-    
-    %Normalisation des nouvelles données
-    if isempty(Group_emg)
-        Group_norm = normalise_APA_v2(Group_data);
-    else
-        [Group_norm EMGs_norm] = normalise_APA_v4(Group_data,Group_emg);
-        [EMG_moy_new EMG_group_new Ecarts_emg_new] = regroupe_acquisitions(EMGs_norm);
-    end
-    
-    %Moyennage des activations EMG
-    EMG_activation_moy={};
-    if ~isempty(Activation_emg)
-        EMG_activation_moy_new = regroupe_EMGs(Activation_emg);
-        try
-            EMG_activation_moy_old = Activation_EMG_percycle.(groupe_acqs);
-        catch ERrEMG %pas d'activation au groupe précedent
-            EMG_activation_moy_old ={};
-        end
-        
-        if isempty(EMG_activation_moy_old)
-            EMG_activation_moy = EMG_activation_moy_new;
-        else
-            tmp_emg.old_grp = EMG_activation_moy_old;
-            tmp_emg.new_grp = EMG_activation_moy_new;
-            EMG_activation_moy = regroupe_EMGs(tmp_emg);
-        end
-        
-    end
-    
-    %Création d'un groupe provisoire
-    [Acq_moy_new Data_group_new Ecarts_acqs_new] = regroupe_acquisitions_v2(Group_norm);
-    
-    %Ajout du groupe
-    Group_data2.add_acqs = Data_group_new;
-    Group_data2.old_group = Corridors.(groupe_acqs);
-    
-    %Renormalisation avec le corridor de base
-    if isempty(Group_emg)
-        Group_norm2 = normalise_APA_v2(Group_data2);
-    else
-        Group_emg2.add_acqs = EMG_group_new;
-        Group_emg2.old_group = Corridors_EMG.(groupe_acqs);
-        [Group_norm2 EMGs_norm2] = normalise_APA_v4(Group_data2,Group_emg2);
-        [EMG_moy_all EMG_group Ecarts_emg] = regroupe_corridors(EMGs_norm2);
-    end
-    
-    
-    Acqs_moy.add_acqs  = Acq_moy_new;
-    Acqs_moy.old_group = Sujet.(groupe_acqs);
-    Moy_data.old_group = Resultats.(groupe_acqs);
-    
-    %Calcul du corridor et des resultats moyens
-    [Corr_moy Data_group Ecarts_corrs] = regroupe_corridors(Group_norm2);
-    [Acq_moy Data_group2 Ecarts_acqs] = regroupe_acquisitions_v2(Acqs_moy);
-    [Res_moy Res_group Ecarts_res] = regroupe_acquisitions(Moy_data);
-    
-    %Stockage
-    Corridors.(groupe_acqs) = Data_group;
-    Sujet.(groupe_acqs) = Acq_moy;
-    Resultats.(groupe_acqs) = Res_moy;
-    
-    %EMG
-    if ~isempty(Group_emg)
-        Corridors_EMG.(groupe_acqs) = EMG_group;
-        Activation_EMG_percycle.(groupe_acqs) = EMG_activation_moy;
-        Muscles = fieldnames(EMG_moy_all);
-        EMG.(groupe_acqs).nom = Muscles;
-        EMG.(groupe_acqs).Fech = EMG.(listes_acqs{acqs(i)}).Fech;
-        
-        for m = 1:length(Muscles)
-            EMG.(groupe_acqs).val(:,m) = EMG_moy_all.(Muscles{m})';
-        end
-    end
-    %Affichage
-    set(findobj('tag','Affich_corridor'), 'Visible','On');
-    set(findobj('tag','Affich_corridor'), 'Enable','On');
-    set(findobj('tag','Clean_corridor'), 'Visible','On');
-    set(findobj('tag','Clean_corridor'), 'Enable','On');
-    button = questdlg('Afficher corridor ?','Affichage interface','Oui','Non','Non');
-    if strcmp(button,'Oui') % On affiche le corridor dans une nouvelle fenêtre de visualisation de l'interface
-        Affich_corridor_Callback(findobj('tag','Affich_corridor'), groupe_acqs);
-    end
-    
-    % On demande si on veut supprimer les acquisitions
-    button = questdlg('Retirer les acquisitions du groupe de la liste ?','Réduction de la liste','Oui','Non','Non');
-    if strcmp(button,'Oui') % On supprime uniquement de la liste les acquisitions qui ont été prises dans les groupe
-        listes_acqs(acqs,:)=[];
-        set(findobj('tag','listbox1'), 'Value',1);
-        set(findobj('tag','listbox1'),'String',listes_acqs);
-    end
-catch ERrt
-    warndlg('Arrêt ajout groupe!');
-end
-
-%% Group_subjects_Callback - Moyennage des acquisitions des sujets sélectionnés et stockage dans une variable acquisition (Group)
-% --- Executes on button press in Group_subjects.
-function Group_subjects_Callback(hObject, eventdata, handles)
-% Moyennage des acquisitions des sujets sélectionnés et stockage dans une variable acquisition (Group)
-global Sujet Resultats Corridors Activation_EMG_percycle Notocord Group EMG Corridors_EMG
-% hObject    handle to Group_subjects (see GCBO)
-
-%Extraction des corridors
-listes_acqs = fieldnames(Corridors);
-
-%Choix du nom du group
-groupe_acqs = cell2mat(inputdlg('Entrez le nom du groupe:','Calcul corridor groupe'));
-
-%Sélections de l'utilisateur
-try
-    [acqs,v] = listdlg('PromptString',{strcat('Group ',groupe_acqs),'Choix des corridors à inclure dans le group'},...
-        'ListSize',[300 300],...
-        'ListString',listes_acqs);
-    
-    %Stockage des acquisitions choisies dans une structure équivalente
-    Group_data={};
-    Moy_data={};
-    Group_emg={};
-    Group_emg2={};
-    Activation_emg={};
-    
-    for i=1:length(acqs)
-        Group_data.(listes_acqs{acqs(i)}) = Corridors.(listes_acqs{acqs(i)});
-        Group_data2.(listes_acqs{acqs(i)}) = Sujet.(listes_acqs{acqs(i)}); %% Pour calculer les marqueurs temporels moyens
-        
-        try
-            Group_emg.(listes_acqs{acqs(i)}) = Corridors_EMG.(listes_acqs{acqs(i)});
-        catch ErrEMG
-            disp(['Pas de corridor EMG pour le groupe: ' listes_acqs{acqs(i)}]);
-        end
-        
-        try
-            Group_emg2.(listes_acqs{acqs(i)}) = EMG.(listes_acqs{acqs(i)});
-        catch ErrEMG2
-            disp(['Pas d''EMG moyen pour le groupe: ' listes_acqs{acqs(i)}]);
-        end
-        
-        if ~isfield(Resultats,listes_acqs{acqs(i)}) % Calculs des paramètres si non effectués
-            disp(['Calculs groupe ' listes_acqs{acqs(i)}]);
-            if Notocord
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_Not(Sujet.(listes_acqs{acqs(i)}),Resultats.(listes_acqs{acqs(i)}));
-            else
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_v1(Sujet.(listes_acqs{acqs(i)}));
-            end
-        end
-        
-        try
-            if isfield(Activation_EMG_percycle,listes_acqs{acqs(i)}) % Moyenneage des activations EMG (si existent)
-                % Rassembler les periodes d'activation EMG
-                Activation_emg.(listes_acqs{acqs(i)}) = Activation_EMG_percycle.(listes_acqs{acqs(i)});
-            else
-                disp(['Pas d''activations EMG pour le groupe: ' listes_acqs{acqs(i)}]);
-            end
-        catch ERR
-            disp('Pas de calcul moyen EMG');
-        end
-        
-        Moy_data.(listes_acqs{acqs(i)}) = Resultats.(listes_acqs{acqs(i)});
-    end
-    
-    
-    %Normalisation des données brutes
-    if isempty(Group_emg)
-        Group_norm = normalise_APA_v2(Group_data);
-        Group_norm2 = normalise_APA_v2(Group_data2);
-    else
-        %     [Group_norm EMGs_norm] = normalise_APA_v4(Group_data,Group_emg);
-        [Group_norm EMGs_norm] = normalise_Corridors(Group_data,Group_emg);
-        [Group_norm2 EMGs_norm2] = normalise_APA_v4(Group_data2,Group_emg2);
-    end
-    
-    %Moyennage des activations EMG
-    EMG_activation_moy={};
-    if ~isempty(Activation_emg)
-        EMG_activation_moy = regroupe_EMGs(Activation_emg);
-    end
-    
-    %Calcul du corridor et des resultats moyens
-    [Corr_moy Data_group Ecarts_corrs] = regroupe_corridors(Group_norm);
-    [Corr_emg_moy EMG_group_all Ecarts_corrs] = regroupe_corridors(EMGs_norm);
-    [Acq_moy Data_group2 Ecarts_acqs] = regroupe_acquisitions_v2(Group_norm2);
-    [Res_moy Res_group Ecarts_res] = regroupe_acquisitions(Moy_data);
-    [EMG_moy EMG_group_moy Ecarts_emg] = regroupe_acquisitions(EMGs_norm2);
-    
-    %Stockage
-    Group.(groupe_acqs) = Data_group;
-    Corridors.(groupe_acqs) = Data_group;
-    Sujet.(groupe_acqs) = Acq_moy;
-    Resultats.(groupe_acqs) = Res_moy;
-    
-    %EMG
-    if ~isempty(Group_emg)
-        Corridors_EMG.(groupe_acqs) = EMG_group_all;
-        if ~isempty(EMG_activation_moy)
-            Activation_EMG_percycle.(groupe_acqs) = EMG_activation_moy;
-        end
-        Muscles = fieldnames(EMG_moy);
-        EMG.(groupe_acqs).nom = Muscles;
-        EMG.(groupe_acqs).Fech = EMG.(listes_acqs{acqs(i)}).Fech;
-        
-        for m = 1:length(Muscles)
-            EMG.(groupe_acqs).val(:,m) = EMG_moy.(Muscles{m})';
-        end
-    end
-    
-    %Affichage
-    set(findobj('tag','Affich_corridor'), 'Visible','On');
-    set(findobj('tag','Affich_corridor'), 'Enable','On');
-    set(findobj('tag','Clean_corridor'), 'Visible','On');
-    set(findobj('tag','Clean_corridor'), 'Enable','On');
-    set(findobj('tag','Group_subjects_add'),'Enable','On');
-    button = questdlg('Afficher corridor ?','Affichage interface','Oui','Non','Non');
-    if strcmp(button,'Oui') % On affiche le corridor dans une nouvelle fenêtre de visualisation de l'interface
-        Affich_corridor_Callback(findobj('tag','Affich_corridor'), groupe_acqs);
-    end
-    
-    % On demande si on veut supprimer les acquisitions
-    button = questdlg('Retirer les acquisitions du groupe de la liste ?','Réduction de la liste','Oui','Non','Non');
-    if strcmp(button,'Oui') % On supprime uniquement de la liste les acquisitions qui ont été prises dans les groupe
-        listes_acqs(acqs,:)=[];
-        set(findobj('tag','listbox1'), 'Value',1);
-        set(findobj('tag','listbox1'),'String',listes_acqs);
-    end
-catch ERR
-    warndlg('Arret création groupe');
-end
-
-%% Group_subjects_add - Ajout de corridors à un group existant
-function Group_subjects_add(hObject, eventdata, handles)
-% Ajout de corridors à un group existant
-global Sujet Resultats Corridors Activation_EMG_percycle Notocord Group EMG Corridors_EMG
-% hObject    handle to Group_subjects_add (see GCBO)
-
-try
-    %Choix du groupe
-    listes_grp = fieldnames(Group);
-    %Sélections de l'utilisateur
-    [i,v] = listdlg('PromptString',{'Choix du goupe à incrémenter'},...
-        'ListSize',[300 300],...
-        'ListString',listes_grp);
-    
-    groupe_acqs = cell2mat(listes_grp(i));
-    
-    listes_acqs = fieldnames(Corridors);
-    [acqs,v] = listdlg('PromptString',{strcat('Group ',groupe_acqs),'Choix des corridors à inclure dans le group'},...
-        'ListSize',[300 300],...
-        'ListString',listes_acqs);
-    
-    %Stockage des acquisitions choisies dans une structure équivalente
-    Group_data={};
-    Moy_data={};
-    Group_emg={};
-    Group_emg2={};
-    Activation_emg={};
-    for i=1:length(acqs)
-        Group_data.(listes_acqs{acqs(i)}) = Corridors.(listes_acqs{acqs(i)});
-        Group_data2.(listes_acqs{acqs(i)}) = Sujet.(listes_acqs{acqs(i)}); %% Pour calculer les marqueurs temporels moyens
-        
-        try
-            Group_emg.(listes_acqs{acqs(i)}) = Corridors_EMG.(listes_acqs{acqs(i)});
-        catch ErrEMG
-            disp(['Pas de corridor EMG pour le groupe: ' listes_acqs{acqs(i)}]);
-        end
-        
-        try
-            Group_emg2.(listes_acqs{acqs(i)}) = EMG.(listes_acqs{acqs(i)});
-        catch ErrEMG2
-            disp(['Pas d''EMG moyen pour le groupe: ' listes_acqs{acqs(i)}]);
-        end
-        
-        if ~isfield(Resultats,listes_acqs{acqs(i)}) % Calculs des paramètres si non effectués
-            disp(['Calculs groupe ' listes_acqs{acqs(i)}]);
-            if Notocord
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_Not(Sujet.(listes_acqs{acqs(i)}),Resultats.(listes_acqs{acqs(i)}));
-            else
-                Resultats.(listes_acqs{acqs(i)})=calculs_parametres_initiationPas_v1(Sujet.(listes_acqs{acqs(i)}));
-            end
-        end
-        
-        try
-            if isfield(Activation_EMG_percycle,listes_acqs{acqs(i)}) % Moyenneage des activations EMG (si existent)
-                % Rassembler les periodes d'activation EMG
-                Activation_emg.(listes_acqs{acqs(i)}) = Activation_EMG_percycle.(listes_acqs{acqs(i)});
-            else
-                disp(['Pas d''activations EMG pour l''acquisition: ' listes_acqs{acqs(i)}]);
-            end
-        catch ERR
-            disp('Pas de calcul moyen EMG');
-        end
-        
-        Moy_data.(listes_acqs{acqs(i)}) = Resultats.(listes_acqs{acqs(i)});
-    end
-    
-    %Ajout du groupe
-    Group_data.(groupe_acqs) = Group.(groupe_acqs);
-    Group_data2.(groupe_acqs) = Sujet.(groupe_acqs);
-    
-    %Normalisation des données brutes
-    if isempty(Group_emg)
-        Group_norm = normalise_APA_v2(Group_data);
-        Group_norm2 = normalise_APA_v2(Group_data2);
-    else
-        Group_emg.(groupe_acqs) = Corridors_EMG.(groupe_acqs);
-        Group_emg2.(groupe_acqs) = EMG.(groupe_acqs);
-        [Group_norm EMGs_norm] = normalise_APA_v4(Group_data,Group_emg);
-        [Group_norm2 EMGs_norm2] = normalise_APA_v4(Group_data2,Group_emg2);
-        [EMG_all_moy EMG_group_all Ecarts_corrs] = regroupe_corridors(EMGs_norm);
-        [EMG_Acq_moy EMG_group_moy Ecarts_acqs] = regroupe_acquisitions(EMGs_norm2);
-    end
-    
-    %Moyennage des activations EMG
-    EMG_activation_moy={};
-    if ~isempty(Activation_emg)
-        EMG_activation_moy_new = regroupe_EMGs(Activation_emg);
-        try
-            EMG_activation_moy_old = Activation_EMG_percycle.(groupe_acqs);
-        catch ERrEMG %pas d'activation au groupe précedent
-            EMG_activation_moy_old ={};
-        end
-        
-        if isempty(EMG_activation_moy_old)
-            EMG_activation_moy = EMG_activation_moy_new;
-        else
-            tmp_emg.old_grp = EMG_activation_moy_old;
-            tmp_emg.new_grp = EMG_activation_moy_new;
-            EMG_activation_moy = regroupe_EMGs(tmp_emg);
-        end
-        
-    end
-    
-    %Calcul du corridor et des resultats moyens
-    [Corr_moy Data_group Ecarts_corrs] = regroupe_corridors(Group_norm);
-    [Acq_moy Data_group2 Ecarts_acqs] = regroupe_acquisitions_v2(Group_norm2);
-    [Res_moy Res_group Ecarts_res] = regroupe_acquisitions(Moy_data);
-    
-    %Stockage
-    Group.(groupe_acqs) = Data_group;
-    Corridors.(groupe_acqs) = Data_group;
-    Sujet.(groupe_acqs) = Acq_moy;
-    Resultats.(groupe_acqs) = Res_moy;
-    
-    %EMG
-    if ~isempty(Group_emg)
-        Corridors_EMG.(groupe_acqs) = EMG_group_all;
-        Activation_EMG_percycle.(groupe_acqs) = EMG_activation_moy;
-        Muscles = fieldnames(EMG_all_moy);
-        EMG.(groupe_acqs).nom = Muscles;
-        EMG.(groupe_acqs).Fech = EMG.(listes_acqs{acqs(i)}).Fech;
-        
-        try
-            for m = 1:length(Muscles)
-                EMG.(groupe_acqs).val(:,m) = EMG_all_moy.(Muscles{m})';
-            end
-        catch Err_size
-            EMG = rmfield(EMG.(groupe_acqs),'val');
-            for m = 1:length(Muscles)
-                EMG.(groupe_acqs).val(:,m) = EMG_all_moy.(Muscles{m})';
-            end
-        end
-        
-    end
-    %Affichage
-    set(findobj('tag','Affich_corridor'), 'Visible','On');
-    set(findobj('tag','Affich_corridor'), 'Enable','On');
-    set(findobj('tag','Clean_corridor'), 'Visible','On');
-    set(findobj('tag','Clean_corridor'), 'Enable','On');
-    button = questdlg('Afficher corridor ?','Affichage interface','Oui','Non','Non');
-    if strcmp(button,'Oui') % On affiche le corridor dans une nouvelle fenêtre de visualisation de l'interface
-        Affich_corridor_Callback(findobj('tag','Affich_corridor'), groupe_acqs);
-    end
-    
-    % On demande si on veut supprimer les acquisitions
-    button = questdlg('Retirer les acquisitions du groupe de la liste ?','Réduction de la liste','Oui','Non','Non');
-    if strcmp(button,'Oui') % On supprime uniquement de la liste les acquisitions qui ont été prises dans les groupe
-        listes_acqs(acqs,:)=[];
-        set(findobj('tag','listbox1'), 'Value',1);
-        set(findobj('tag','listbox1'),'String',listes_acqs);
-    end
-catch ERrt
-    warndlg('Arrêt ajout groupe!');
+    warning(ERR.identifier,['Arret création groupe / ' ERR.message])
+    warndlg(['Arret création groupe' ERR]);
 end
 
 %% Affich_corridor_Callback - Affichage des corridors pour les données brutes
 % --- Executes on button press in Affich_corridor.
-function Affich_corridor_Callback(hObject, eventdata, handles)
+function Affich_corridor_Callback
 % Affichage des corridors pour les données brutes
-global axes1 axes2 axes3 axes4 Corridors Sujet list Sujet_tmp listes_corr i t
+global haxes1 haxes2 haxes3 haxes4 corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 Corridors
 % hObject    handle to Affich_corridor (see GCBO)
-Sujet_tmp = Sujet;
-choix_corr = {};
-%Extraction des corridors calculés
+
 try
-    legendes={};
-    if isempty(eventdata)
-        listes_corr = fieldnames(Corridors);
-        %Sélections de l'utilisateur
-        [i,v] = listdlg('PromptString',{'Choix du corridor à afficher'},...
-            'ListSize',[300 300],...
-            'ListString',listes_corr,'SelectionMode','Multiple');
-    else
-        if iscell(eventdata)
-            listes_corr = eventdata;
-            i = 1:size(listes_corr,1);
-        else
-            listes_corr{1} = eventdata;
-            i = 1;
-        end
-    end
-    
-    buttonSTD = questdlg('Modifier Epaisseur corridors?','Affichage Corridors','Oui','Non','Oui');
-    if strcmp(buttonSTD,'Oui')
-        facK = inputdlg({'(0-1)'},'Facteur de réduction ?',1,{'1'});
-        facK = str2double(facK);
-    else
-        facK = 1;
-    end
-    
-    listes_acqs = fieldnames(Sujet_tmp);
-    %Affichage
-    % Création de l'interface de visu
-    f = figure();
-    b = uiextras.HBox( 'Parent', f);
-    b1 = uiextras.VBox( 'Parent', b);
-    %Ajout de la liste sans la moyenne du/des corridor(s) venant d'être calculé(s)
-    list = uicontrol( 'Style', 'listbox', 'Parent', b, 'String', listes_acqs,'Callback',@list_Callback);
-    
-    axes1 = axes( 'Parent', b1, ...
-        'ActivePositionProperty', 'Position','xticklabel',[]);
-    
-    colors={'r' 'g' 'b' 'm' 'k' 'c' 'y'};
-    for k=1:length(i)
-        t=(0:size(Corridors.(listes_corr{i(k)}).CP_AP,2)-1)*1/max(Corridors.(listes_corr{i(k)}).Fech);
-        Offset_CPAP = Sujet_tmp.(listes_corr{i(k)}).CP_AP(1)*1e-1;
-        try
-            h_corr_CP_AP = stdshade(Corridors.(listes_corr{i(k)}).CP_AP*1e-1-Offset_CPAP,0.3,colors{k},t,1,axes1,[],[],facK);
-        catch more_than7corrs
-            h_corr_CP_AP = stdshade(Corridors.(listes_corr{i(k)}).CP_AP*1e-1-Offset_CPAP,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes1,[],[],facK);
-        end
+    if ~ishandle(corr1)
+        % Affichage des courbes déplacements (CP) et Puissance/Acc
+        set(gcf,'CurrentAxes',haxes1)
+        corr1 = plot(haxes1,Corridors.Trial(1).CP_Position.Time,Corridors.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
+        t = Corridors.Trial(1).CP_Position.Time;
+        N=[t';t'];
+        T=[Corridors.Trial(3).CP_Position.Data(1,:)';Corridors.Trial(2).CP_Position.Data(1,:)'];
+        Noeuds=[N,T];
+        P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
+        handle_corr1=patch(...
+            'Vertices',Noeuds,...
+            'faces',P,...
+            'facecolor',[0 0 1],...
+            'edgecolor','none',...
+            'FaceAlpha',0.3);
         
-        txt1 = listes_corr{i(k)};
-        txt2 = [listes_corr{i(k)} '±1STD'];
-        txt1(regexp(txt1,'_'))=' ';
-        txt2(regexp(txt2,'_'))=' ';
-        legendes{2*(k-1)+1} = txt1;
-        legendes{2*k} = txt2;
-    end
-    ylabel(axes1,'Déplacememt AP CP (cm)');
-    axis tight
-    
-    legend(legendes);
-    
-    axes2 = axes( 'Parent', b1, ...
-        'ActivePositionProperty', 'Position','xticklabel',[]);
-    for k=1:length(i)
-        t=(0:size(Corridors.(listes_corr{i(k)}).CP_ML,2)-1)*1/max(Corridors.(listes_corr{i(k)}).Fech);
-        if isfield(Corridors.(listes_corr{i(k)}),'CP_ML_D') || isfield(Corridors.(listes_corr{i(k)}),'CP_ML_G')
-            try
-                Offset_CPMLD = nanmean(Corridors.(listes_corr{i(1)}).CP_ML_D(:,1))*1e-1;
-                stdshade(Corridors.(listes_corr{i(k)}).CP_ML_D*1e-1-Offset_CPMLD,0.3,colors{k},t,1,axes2,[],[],facK);
-            catch NO_CP_D
-                disp('Pas de moyennage côté D!');
-            end
-            
-            try
-                Offset_CPMLG = nanmean(Corridors.(listes_corr{i(1)}).CP_ML_G(:,1))*1e-1;
-                stdshade(Corridors.(listes_corr{i(k)}).CP_ML_G*1e-1-Offset_CPMLG,0.3,[colors{k} '--'],t,1,axes2,[],[],facK);
-            catch NO_CP_G
-                disp('Pas de moyennage côté G!');
-            end
-            %             legend('Pied D','','Pied G','');
-        else
-            Offset_CPML = Sujet_tmp.(listes_corr{i(k)}).CP_ML(1)*1e-1;
-            try
-                h_corr_CP_ML = stdshade(Corridors.(listes_corr{i(k)}).CP_ML*1e-1-Offset_CPML,0.3,colors{k},t,1,axes2,[],[],facK);
-            catch more_than7corrs
-                h_corr_CP_ML = stdshade(Corridors.(listes_corr{i(k)}).CP_ML*1e-1-Offset_CPML,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes2,[],[],facK);
-            end
-        end
-    end
-    ylabel(axes2,'Déplacememt ML CP (cm)');
-    axis tight
-    
-    axes3 = axes( 'Parent', b1, ...
-        'ActivePositionProperty', 'Position','xticklabel',[]);
-    for k=1:length(i)
-        t=(0:size(Corridors.(listes_corr{i(k)}).V_CG_AP,2)-1)*1/max(Corridors.(listes_corr{i(k)}).Fech);
-        if get(findobj('tag','V_intgr'),'Value')
-            try
-                h_corr_CG_AP = stdshade(Corridors.(listes_corr{i(k)}).V_CG_AP,0.3,colors{k},t,1,axes3,[],[],facK);
-            catch more_than7corrs
-                h_corr_CG_AP = stdshade(Corridors.(listes_corr{i(k)}).V_CG_AP,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes3,[],[],facK);
-            end
-        else
-            try
-                h_corr_CG_AP = stdshade(Corridors.(listes_corr{i(k)}).V_CG_AP_d,0.3,colors{k},t,1,axes3,[],[],facK);
-            catch more_than7corrs
-                h_corr_CG_AP = stdshade(Corridors.(listes_corr{i(k)}).V_CG_AP_d,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes3,[],[],facK);
-            end
-        end
-    end
-    ylabel(axes3,'Vitesse CG AP (m/sec)');
-    axis tight
-    
-    axes4 = axes( 'Parent', b1, ...
-        'ActivePositionProperty', 'Position');
-    xlabel(axes4,'Temps (sec)')
-    
-    for k=1:length(i)
-        fin = size(Corridors.(listes_corr{i(k)}).V_CG_Z,2);
-        t=(0:fin-1)*1/max(Corridors.(listes_corr{i(k)}).Fech);
-        V_CG_Z = Corridors.(listes_corr{i(k)}).V_CG_Z;
+        set(gcf,'CurrentAxes',haxes2)
+        corr2 = plot(haxes2,Corridors.Trial(1).CP_Position.Time,Corridors.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
+        t = Corridors.Trial(1).CP_Position.Time;
+        N=[t';t'];
+        T=[Corridors.Trial(3).CP_Position.Data(2,:)';Corridors.Trial(2).CP_Position.Data(2,:)'];
+        Noeuds=[N,T];
+        P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
+        handle_corr2=patch(...
+            'Vertices',Noeuds,...
+            'faces',P,...
+            'facecolor',[0 0 1],...
+            'edgecolor','none',...
+            'FaceAlpha',0.3);
         
-        if get(findobj('tag','V_intgr'),'Value')
-            try
-                h_corr_CG_Z = stdshade(V_CG_Z,0.3,colors{k},t,1,axes4,[],[],facK);
-            catch more_than7corrs
-                h_corr_CG_Z = stdshade(V_CG_Z,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes4,[],[],facK);
-            end
-        else
-            try
-                h_corr_CG_Z = stdshade(V_CG_Z_d,0.3,colors{k},t,1,axes4,[],[],facK);
-            catch more_than7corrs
-                h_corr_CG_Z = stdshade(V_CG_Z_d,0.3,[(k-0.5)/length(i) (k-1)/length(i) k/length(i)],t,1,axes4,[],[],facK);
-            end
-        end
+        set(gcf,'CurrentAxes',haxes3)
+        corr3 = plot(haxes3,Corridors.Trial(1).CG_Speed.Time,Corridors.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
+        t = Corridors.Trial(1).CG_Speed.Time;
+        N=[t';t'];
+        T=[Corridors.Trial(3).CG_Speed.Data(1,:)';Corridors.Trial(2).CG_Speed.Data(1,:)'];
+        Noeuds=[N,T];
+        P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
+        handle_corr3=patch(...
+            'Vertices',Noeuds,...
+            'faces',P,...
+            'facecolor',[0 0 1],...
+            'edgecolor','none',...
+            'FaceAlpha',0.3);
+        
+        set(gcf,'CurrentAxes',haxes4)
+        corr4 = plot(haxes4,Corridors.Trial(1).CG_Speed.Time,Corridors.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
+        t = Corridors.Trial(1).CG_Speed.Time;
+        N=[t';t'];
+        T=[Corridors.Trial(3).CG_Speed.Data(3,:)';Corridors.Trial(2).CG_Speed.Data(3,:)'];
+        Noeuds=[N,T];
+        P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
+        handle_corr4=patch(...
+            'Vertices',Noeuds,...
+            'faces',P,...
+            'facecolor',[0 0 1],...
+            'edgecolor','none',...
+            'FaceAlpha',0.3);
     end
-    axis tight
     
-    ylabel(axes4,'Vitesse CG Z (m/sec)');
+   
+    ind_corr = get(findobj('tag','Affich_corridor'),'Value');
+    switch ind_corr
+        case 0
+            set(corr1,'Visible','off');
+            set(corr2,'Visible','off');
+            set(corr3,'Visible','off');
+            set(corr4,'Visible','off');
+            set(handle_corr1,'Visible','off');
+            set(handle_corr2,'Visible','off');
+            set(handle_corr3,'Visible','off');
+            set(handle_corr4,'Visible','off');
+        case 1
+            set(corr1,'Visible','on');
+            set(corr2,'Visible','on');
+            set(corr3,'Visible','on');
+            set(corr4,'Visible','on');
+            set(handle_corr1,'Visible','on');
+            set(handle_corr2,'Visible','on');
+            set(handle_corr3,'Visible','on');
+            set(handle_corr4,'Visible','on');
+    end
     
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
+    warning(ERR.identifier,ERR.message)
 end
 
 %% list_Callback - Affichage courbes avec corridors
 % --- Execute when pressing corridor interface list
-function list_Callback(hObj,eventdata,handles)
+function list_Callback(~,~,~)
 % Affichage courbes avec corridors
 global axes1 axes2 axes3 axes4 Sujet_tmp list listes_corr i t T_FC1_base
 
@@ -2231,7 +1468,7 @@ end
 
 %% subject_info -Enregistrement des données sujet
 % --- Execute when choosing to set subject data
-function Data = subject_info(hObj,eventdata,handles)
+function Data = subject_info(~,~,~)
 % Enregistrement des données sujet
 global Subject_data
 
@@ -2254,53 +1491,12 @@ try
     
     Subject_data = Data;
 catch ERR
-    disp('Erreur acquisition données sujet');
-end
-
-%% Clean_corridor_Callback - Retirer un corridor si mauvais
-% --- Executes on button press in Clean_corridor.
-function Clean_corridor_Callback(hObject, eventdata, handles)
-% Retirer un corridor si mauvais
-global Sujet Corridors Resultats Corridors_EMG EMG Activation_EMG_percycle LFP Corridors_LFP
-% hObject    handle to Clean_corridor (see GCBO)
-
-try
-    listes_corr = fieldnames(Corridors);
-    %Sélections de l'utilisateur
-    [i,v] = listdlg('PromptString',{'Choix du/des corridor(s) à effacer'},...
-        'ListSize',[300 300],...
-        'ListString',listes_corr,'SelectionMode','Multiple');
-    
-    for corrd=1:length(i)
-        try
-            Sujet = rmfield(Sujet,listes_corr{i(corrd)});
-            Resultats = rmfield(Resultats,listes_corr{i(corrd)});
-            EMG = rmfield(EMG,listes_corr{i(corrd)});
-            LFP = rmfield(LFP,listes_corr{i(corrd)});
-        catch ERr_S
-        end
-        Corridors = rmfield(Corridors,listes_corr{i(corrd)});
-        Corridors_EMG = rmfield(Corridors_EMG,listes_corr{i(corrd)});
-        Activation_EMG_percycle = rmfield(Activation_EMG_percycle,listes_corr{i(corrd)});
-        Corridors_LFP = rmfield(Corridors_LFP,listes_corr{i(corrd)});
-    end
-    
-    disp('Corridors supprimés');
-    listes_corr{i}
-    
-    listes_corr_post = fieldnames(Corridors);
-    if isempty(listes_corr_post)
-        set(findobj('tag','Affich_corridor'), 'Enable','Off');
-        set(findobj('tag','Clean_corridor'), 'Enable','Off');
-    end
-    
-catch ERR
-    warndlg('!!Pas de Corridors calculés!!')
+    warning(ERR.identifier, ['Erreur acquisition données sujet / ' ERR.message]);
 end
 
 %% Delete_current_Callback
 % --- Executes on button press in Delete_current.
-function Delete_current_Callback(hObject, eventdata, handles)
+function Delete_current_Callback(~, ~, ~)
 global APA ResAPA TrialParams liste_marche acq_courante
 % hObject    handle to Delete_current (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
@@ -2311,11 +1507,11 @@ ResAPA.removedTrials = [ResAPA.removedTrials,ResAPA.Trial(pos)];
 TrialParams.removedTrials = [TrialParams.removedTrials,TrialParams.Trial(pos)];
 num_Trial = arrayfun(@(i) APA.Trial(i).CP_Position.TrialNum,1:length(APA.Trial));
 num_remTrial = arrayfun(@(i) APA.removedTrials(i).CP_Position.TrialNum,1:length(APA.removedTrials));
-[a,ind_supp_tri] = sort(unique(num_remTrial));
+[~,ind_supp_tri] = sort(unique(num_remTrial));
 APA.removedTrials = APA.removedTrials(ind_supp_tri);
 ResAPA.removedTrials = ResAPA.removedTrials(ind_supp_tri);
 TrialParams.removedTrials = TrialParams.removedTrials(ind_supp_tri);
-[a,ind_trial] = setdiff(num_Trial,num_remTrial);
+[~,ind_trial] = setdiff(num_Trial,num_remTrial);
 APA.Trial = APA.Trial(ind_trial);
 ResAPA.Trial = ResAPA.Trial(ind_trial);
 TrialParams.Trial = TrialParams.Trial(ind_trial);
@@ -2323,76 +1519,11 @@ set(findobj('tag','listbox1'),'Value',1);
 liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
 set(findobj('tag','listbox1'),'String',liste_marche);
 
-%% Export_trigs_Callback - Export des évènements temporels (ptx et évènements .lena) si présence de Trigger
-% --- Executes on button press in Export_trigs.
-function Export_trigs_Callback(hObject, eventdata, handles)
-% Export des évènements temporels (ptx et évènements .lena) si présence de Trigger
-% hObject    handle to Export_trigs (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global Sujet Resultats Subject_data Activation_EMG LFP e_lena e_multi
-
-% Calculs
-liste = fieldnames(LFP); %% On extrait la liste des essais valides
-
-wb = waitbar(0);
-set(wb,'Name','Please wait... Exporting trigger data');
-
-Resultats_new={};
-Export={}; % Structure qui va contenir les évènements temporels dans les 2 bases de temps (PF et LFP)
-liste_evts = {};
-for i=1:length(liste)
-    waitbar(i/length(liste)-1,wb,['Vérification acquisition: ' liste{i}]);
-    if isfield(Sujet.(liste{i}),'Trigger')
-        % Calcul dans les bases du trigger (export excel)
-        if ~isfield(Resultats,liste{i})
-            Resultats.(liste{i}) = calculs_parametres_initiationPas_v1(Sujet.(liste{i}));
-        end
-        
-        % Calcul dans les bases PF/LFP (export lena/ptx)
-        if isfield(Sujet.(liste{i}),'Trigger_LFP')
-            [Resultats_new.(liste{i}) Export.(liste{i})] = calculs_parametres_initiationPas_v3(Sujet.(liste{i}));
-        end
-        
-        % Gestion des Onset des EMG
-        try
-            Onset_EMG_TA = min([Activation_EMG.(liste{i}).RTA(1,1) Activation_EMG.(liste{i}).LTA(1,1)]); %Debut inhibition
-            Export.(liste{i}).tPF.TA = Sujet.(liste{i}).tMarkers.Onset_TA;
-            Export.(liste{i}).tLFP.TA =  T_trig_lfp + (Onset_EMG_TA - T_trig);
-        catch NO_EMG
-            disp(['EMG non traité ' liste{i}]);
-            Export.(liste{i}).tPF.TA = NaN;
-            Export.(liste{i}).tLFP.TA = NaN;
-        end
-        
-    end
-    liste_evts = [liste_evts;fieldnames(Export.(liste{i}).tLFP)];
-end
-
-if isempty(Subject_data)
-    Subject_data = subject_info();
-end
-
-% Export Excel
-button = questdlg('Export Excel?','Exporter Trigger/Temps sous Excel?','Oui','Non','Non');
-if strcmp(button,'Oui')
-    fichier = inputdlg({'Nom du fichier/sujet' 'Nom de la feuille/session'},'Ecriture .xls',1,{Subject_data.ID 'Triggers'});
-    ecrireQR_xls(Export,[fichier{1} '.xls'],fichier{2});
-end
-close(wb);
-
-% Export du vecteur temporel des evts (base PF et LFP) format Lena (base LFP)
-try
-    [e_lena e_multi] = ecrire_evts_ptx_v4(Export,unique(liste_evts));
-catch Err
-    disp('Pas d''export pistes techniques');
-end
-
 %% PlotPF_Callback - Affichage de la trajectoire du CP sur la PF
 % --- Executes on button press in PlotPF.
-function PlotPF_Callback(hObject, eventdata, handles)
+function PlotPF_Callback(~, ~, ~)
 % Affichage de la trajectoire du CP sur la PF
-global haxes6 Sujet acq_courante
+global haxes6 APA
 % hObject    handle to PlotPF (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2414,13 +1545,14 @@ else
         plot(haxes6,Sujet.(acq_courante).t,Sujet.(acq_courante).Puissance_CG); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
     catch Err
+        warning(Err.identifier,Err.message)
         plot(haxes6,Sujet.(acq_courante).t,Sujet.(acq_courante).Acc_Z); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Axe vertical(m²/s)','FontName','Times New Roman','FontSize',10);
     end
 end
 
 %% Export des evenements du pas
-function export_events(hObject, eventdata, handles)
+function export_events(~, ~, ~)
 global TrialParams ResAPA
 
 path = cd;
@@ -2441,7 +1573,7 @@ for i_acq = 1 : length(liste_acq)
         if ~isempty(strfind(liste_acq{i_acq},'_MR'))
             marche = {'_MR'};
         elseif ~isempty(strfind(liste_acq{i_acq},'_MN'))
-            marche = {'_MN'}; 
+            marche = {'_MN'};
         elseif ~isempty(strfind(liste_acq{i_acq},'_R'))
             marche = {'_R'};
         elseif ~isempty(strfind(liste_acq{i_acq},'_S'))
@@ -2479,128 +1611,13 @@ for i_acq = 1 : length(liste_acq)
         %     btkWriteAcquisition(acq,fullfile(chemin_c3d,strrep(nom_fich,'.c3d','_2.c3d')))
         btkWriteAcquisition(acq,fullfile(chemin_c3d,nom_fich))
         disp('OK')
-    catch
-        disp('Erreur export events')
+    catch ERR
+        warning(ERR.identifier,ERR.message)
     end
 end
 cd(path);
-
-
-
-%% Export format commun traitemetn du signal
-function export_format_commun(hObject, eventdata, handles)
-
-global Sujet Subject_data removedSujet Resultats removedResultats
-
-liste_trial = fieldnames(Sujet);
-
-if strfind(liste_trial{1},'ON')
-    traitement = 'ON';
-elseif strfind(liste_trial{1},'OFF')
-    traitement = 'OFF';
-end
-
-if ~isempty(strfind(liste_trial{1},'MN')) || ~isempty(strfind(liste_trial{1},'S'))
-    vit = 'S';
-elseif ~isempty(strfind(liste_trial{1},'MR')) || ~isempty(strfind(liste_trial{1},'R'))
-    vit = 'R';
-end
-
-if strfind(liste_trial{1},'Preop')
-    Session = 'Preop';
-elseif strfind(liste_trial{1},'LFP')
-    Session = 'LFP';
-elseif strfind(liste_trial{1},'M3Stim1')
-    Session = 'M3Stim1';
-elseif strfind(liste_trial{1},'M3Stim2')
-    Session = 'M3Stim2';
-end
-
-ind_tag = strfind(liste_trial{1},'_');
-Tag_sujet = liste_trial{1}(ind_tag(2)+1:ind_tag(3)-1);
-
-nom_fich = ['GBMOV_' Session '_' Tag_sujet '_' traitement '_' vit];
-[save_name,chemin] = uiputfile([ nom_fich '.mat']);
-nom_fich_PF = [nom_fich '_PF'];
-nom_fich_trialParams = [nom_fich '_trialParams'];
-
-liste_trial = fieldnames(Sujet);
-
-for i_trial = 1 : length(liste_trial)
-    
-    if isnan(str2double(liste_trial{i_trial}(end-1)))
-        numTrial = ['0' liste_trial{i_trial}(end)];
-    elseif ~isnan(str2double(liste_trial{i_trial}(end)))
-        numTrial = ['' liste_trial{i_trial}(end-1:end)];
-    else
-        numTrial = '';
-    end
-    
-    nom_trial = ['GBMOV_' Session '_' Tag_sujet '_' traitement '_' vit '_' numTrial];
-    
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.fech =  Sujet.' liste_trial{i_trial} '.Fech;']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.Loads =  Sujet.' liste_trial{i_trial} '.Loads;']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.CP =  cat(2,Sujet.' liste_trial{i_trial} '.CP_AP,Sujet.' liste_trial{i_trial} '.CP_ML);']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.V_CG =  cat(2,Sujet.' liste_trial{i_trial} '.V_CG_AP,Sujet.' liste_trial{i_trial} '.V_CG_ML,Sujet.' liste_trial{i_trial} '.V_CG_Z);']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.Acc_CG =  Sujet.' liste_trial{i_trial} '.Acc_CG;']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.time =  Sujet.' liste_trial{i_trial} '.t'';']);
-    eval([nom_fich_PF '.Trial{' num2str(i_trial) '}.file_name =  nom_trial;']);
-    eval([nom_fich_PF '.history =  [];']);
-    
-    tag_events = fieldnames(Sujet.(liste_trial{i_trial}).tMarkers);
-    temps = [];
-    for j_events = 1 : length(tag_events)
-        temps(end+1) = Sujet.(liste_trial{i_trial}).tMarkers.(tag_events{j_events});
-    end
-    eval([nom_fich_trialParams '.Trial{' num2str(i_trial) '}.eventsTime =  temps;']);
-    eval([nom_fich_trialParams '.Trial{' num2str(i_trial) '}.StartingFoot =  Resultats.' liste_trial{i_trial} '.Cote;']);
-    eval([nom_fich_trialParams '.Trial{' num2str(i_trial) '}.file_name =  nom_trial;']);
-    eval([nom_fich_trialParams '.markerNames =  tag_events;']);
-    eval([nom_fich_PF '.history =  [];']);
-    
-end
-
-if ~isempty(removedSujet)
-    liste_removed_trial = fieldnames(removedSujet);
-    for i_trial = 1 : length(liste_removed_trial)
-        
-        if isnan(str2double(liste_removed_trial{i_trial}(end-1)))
-            numTrial = ['0' liste_removed_trial{i_trial}(end)];
-        elseif ~isnan(str2double(liste_removed_trial{i_trial}(end)))
-            numTrial = ['' liste_removed_trial{i_trial}(end-1:end)];
-        else
-            numTrial = '';
-        end
-        
-        nom_trial = ['GBMOV_' Session '_' Tag_sujet '_' traitement '_' vit '_' numTrial];
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.fech =  removedSujet.' liste_removed_trial{i_trial} '.Fech;']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.Loads = removedSujet.' liste_removed_trial{i_trial} '.Loads;']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.CP =  cat(2,removedSujet.' liste_removed_trial{i_trial} '.CP_AP,removedSujet.' liste_removed_trial{i_trial} '.CP_ML);']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.V_CG =  cat(2,removedSujet.' liste_removed_trial{i_trial} '.V_CG_AP,removedSujet.' liste_removed_trial{i_trial} '.V_CG_ML,removedSujet.' liste_removed_trial{i_trial} '.V_CG_Z);']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.Acc_CG =  removedSujet.' liste_removed_trial{i_trial} '.Acc_CG;']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.time =  removedSujet.' liste_removed_trial{i_trial} '.t'';']);
-        eval([nom_fich_PF '.removedTrial{' num2str(i_trial) '}.file_name =  nom_trial;']);
-        
-        
-        tag_events = fieldnames(removedSujet.(liste_removed_trial{i_trial}).tMarkers);
-        temps = [];
-        for j_events = 1 : length(tag_events)
-            temps(end+1) = removedSujet.(liste_removed_trial{i_trial}).tMarkers.(tag_events{j_events});
-        end
-        eval([nom_fich_trialParams '.removedTrial{' num2str(i_trial) '}.eventsTime =  temps;']);
-        eval([nom_fich_trialParams '.removedTrial{' num2str(i_trial) '}.StartingFoot =  removedResultats.' liste_removed_trial{i_trial} '.Cote;']);
-        eval([nom_fich_trialParams '.removedTrial{' num2str(i_trial) '}.file_name =  nom_trial;']);
-        eval([nom_fich_trialParams '.markerNames =  tag_events;']);
-        eval([nom_fich_PF '.history =  [];']);
-    end
-end
-
-
-eval(['save(fullfile(chemin,[ nom_fich_PF ''.mat'']),''' nom_fich_PF ''')'])
-eval(['save(fullfile(chemin,[ nom_fich_trialParams ''.mat'']),''' nom_fich_trialParams ''')'])
-
 % --- Executes on button press in APA_auto.
-function APA_auto_Callback(hObject, eventdata, handles)
+function APA_auto_Callback(~, eventdata, handles)
 % hObject    handle to APA_auto (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -2624,7 +1641,7 @@ end
 %%Lancement du chargement
 wb = waitbar(0);
 set(wb,'Name','Please wait... loading data');
-warning off
+
 
 %Cas ou selection d'un fichier unique
 if iscell(files)
@@ -2686,7 +1703,6 @@ for i = 1:nb_acq
         DATA = lire_donnees_c3d_all(fullfile(dossier,myFile));
         h = btkReadAcquisition(fullfile(dossier,myFile));
         Freq_ana = btkGetAnalogFrequency(h); %% Modif' v6, on conserve les données PF à la fréquence de base pour export .lena
-        Freq_vid = btkGetPointFrequency(h);
         t_all = (0:btkGetAnalogFrameNumber(h)-1)*1/Freq_ana;
         Fin = round(find(DATA.actmec(:,9)<70,1,'first'));  %%%% Choix ou on coupe l'acquisition!!! (defaut = PF)
         if isempty(Fin) || strcmp(b_c,'Oui')
@@ -2700,12 +1716,12 @@ for i = 1:nb_acq
         end
         
         % traitement des efforts au sol
-        [forceplates, forceplatesInfo] = btkGetForcePlatforms(h) ;
+        [forceplates, ~] = btkGetForcePlatforms(h) ;
         av = btkGetAnalogs(h);
-        analog_RPLATEFORME=[];
         channels=fieldnames(forceplates(1).channels);
+        analog_RPLATEFORME=nan(size(av.(channels{1}),1),length(channels));
         for kk=1:length(channels)
-            analog_RPLATEFORME=[analog_RPLATEFORME,av.(channels{kk})];
+            analog_RPLATEFORME(:,kk) = av.(channels{kk});
         end;
         RES=Analog_2_forces_plates(analog_RPLATEFORME,forceplates(1).corners',forceplates(1).origin');
         RES=double(RES);
@@ -2730,6 +1746,7 @@ for i = 1:nb_acq
             dim_buff = Fin-sum(l);
             CP_filt(~l,:) = repmat(CP0,dim_buff,1);
         catch empty_CP
+            warning(empty_CP.identifier,empty_CP.message)
             CP_filt = CP;
         end
         
@@ -2760,6 +1777,7 @@ for i = 1:nb_acq
                     TR_ind = find(signal>0.2,1,'first');
                     Trial_TrialParams.EventsTime(1) = TR_ind/DATA.ANLG.Fech;
                 catch GO_start
+                    warning(GO_start.identifier,GO_start.message)
                     Trial_TrialParams.EventsTime(1) = t(1);
                 end
             else
@@ -2771,8 +1789,6 @@ for i = 1:nb_acq
             Trial_TrialParams.EventsTime(1) = t(1);
         end
         
-        evts_fog = [];
-        evts_dt = [];
         try
             % Détection T0 + extraction des evts du pas notés sur Nexus (VICON)
             evts = sort(DATA.events.temps - t(1));
@@ -2790,9 +1806,8 @@ for i = 1:nb_acq
                 Trial_TrialParams.EventsTime(2) = evts(1) + t(1); % 1er evt biomécanique
                 evts(1) = evts(2)-0.01; % ON crée le Heel-Off
             end
-            
-            
         catch ERR % Détection automatique
+            warning(ERR.identifier,ERR.message)
             disp(['Pas d''évènements du pas ' myFile]);
             disp('...Détection automatique des évènements');
             evts = calcul_APA_all(CP_filt,t) - t(1);
@@ -2835,8 +1850,8 @@ for i = 1:nb_acq
         Fres = (Fres - repmat(P,length(Fres),1))./(P(3)/gravite); % Vecteur (GRF - P) à integré
         
         % Intégration
-        V_new=[];
         t_PF=(0:Fin-1).*1/Freq_ana; % on ajoute la variable temporelle
+        V_new=zeros(length(t_PF),3);
         for ii=1:3
             y=Fres(:,ii);
             try % via la toolbox 'Curve Fitting'
@@ -2844,6 +1859,7 @@ for i = 1:nb_acq
                 intgrf = fnint(y_t); % on intègre
                 V_new(:,ii)= fnval(intgrf,t_PF);
             catch ERR % sinon par intégration numérique par la méthode des trapèzes
+                dips(ERR)
                 V_new(:,ii) = cumtrapz(t_PF,y); %Intégration grossière par la méthode des trapèzes
             end
         end
@@ -2870,7 +1886,6 @@ for i = 1:nb_acq
                 Fin_vid = round(Fin * Fech_vid/Freq_ana); % On réestime la dernière 'frame' vidéo
                 t_vid=(0:Fin_vid-1).*1/Fech_vid; % on ajoute la variable temporelle
                 VCoM=zeros(length(t_vid),3);
-                VCoM_pre=zeros(length(t_vid),3);
                 V_CG=zeros(length(t_vid),3);
                 
                 %On retire les NaN avant dérivation et filtrage
@@ -2883,12 +1898,6 @@ for i = 1:nb_acq
                     y_t_vid = csaps(t_vid(~l),y);  % on créé une spline
                     derCoM = fnder(y_t_vid); % on dérive
                     VCoM_pre= fnval(derCoM,t_vid(~l))./1000;
-                    
-                    %Verification des écarts entre les méthodes (intégration vs. dérivation) (car parfois la fonction 'fnder' déconne)
-                    %                 if abs(nanmean(VCoM_pre(:,ii))-nanmean(V_new(:,ii)))>1
-                    %                     VCoM_pre = derive_MH_VAH(y,Fech_vid)./1000;
-                    %                 end
-                    
                     VCoM(~l,ii) = filtrage(VCoM_pre,'b',3,5,Fech_vid); %Lissage (filtre passe-bas de ButterWorth à 5Hz)
                     
                     %Dérivation CG Plug-In-Gait
@@ -2898,7 +1907,8 @@ for i = 1:nb_acq
                             yy_t = csaps(t_vid(~ll),yy);
                             derCG = fnder(yy_t);
                             V_CG((~ll),ii) = fnval(derCG,t_vid(~ll))/1000;
-                        catch ERRRR
+                        catch ERR
+                            warning(ERR.identifier,ERR.message)
                             V_CG((~ll),ii) = derive_MH_VAH(yy,Fech_vid)/1000;
                         end
                     end
@@ -2909,12 +1919,14 @@ for i = 1:nb_acq
                     try
                         VCoM = interp1(t_vid,VCoM,t_PF);
                         V_CG = interp1(t_vid,V_CG,t_PF);
-                    catch
+                    catch ERR
+                        warning(ERR.identifier,ERR.message)
                         disp('Pas d''interpolation à la vitesse derivée');
                     end
                 end
-            catch ERRR
-                disp('PAs de données vidéos pour le calcul du CG');
+            catch ERR
+                warning(ERR.identifier,ERR.message)
+                disp('Pas de données vidéos pour le calcul du CG' );
                 
             end
         end
@@ -2953,8 +1965,9 @@ for i = 1:nb_acq
         TrialParams.Trial(cpt) = Trial_TrialParams;
         ResAPA.Trial(cpt) = Trial_Res_APA;
     catch Err_load
+        warning(Err_load.identifier,Err_load.message)
         disp(['Erreur de chargement pour ' myFile])
     end
 end
 close(wb);
-warning on
+
