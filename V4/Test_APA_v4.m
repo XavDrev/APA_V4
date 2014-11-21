@@ -426,7 +426,7 @@ try
     
     % On modifie le nom des acquisitions/fields similaires
     liste_new = arrayfun(@(i) APA_add.Trial(i).CP_Position.TrialName, 1:length(APA_add.Trial),'uni',0);
-    
+     
     [~,b,~] = matchcells(liste_marche,liste_new,'exact');
     if any(b==1)
         for i = 1 : length(b)
@@ -435,10 +435,25 @@ try
             end
         end
     end
-%     liste_new = liste_new(b==0);
     APA_add.Trial = APA_add.Trial(b==0);
     TrialParams_add.Trial = TrialParams_add.Trial(b==0);
     ResAPA_add.Trial = ResAPA_add.Trial(b==0);
+    
+    liste_new = arrayfun(@(i) APA_add.Trial(i).CP_Position.TrialName, 1:length(APA_add.Trial),'uni',0);
+    liste_rem = arrayfun(@(i) APA.removedTrials(i).CP_Position.TrialName, 1:length(APA.removedTrials),'uni',0);
+    
+    [a,b,~] = matchcells(liste_rem,liste_new,'exact');
+    if any(b==1)       
+        for i = 1 : length(b)
+            if b(i)==1
+                warning(['Attention acquisition déjà supprimée / Données re-chargées pour :' APA_add.Trial(i).CP_Position.TrialName])
+            end
+        end
+        APA.removedTrials = APA.removedTrials(setdiff(1:length(APA.removedTrials),a));
+        ResAPA.removedTrials = ResAPA.removedTrials(setdiff(1:length(ResAPA.removedTrials),a));
+        TrialParams.removedTrials = TrialParams.removedTrials(setdiff(1:length(TrialParams.removedTrials),a));
+    end
+    
     APA.Trial = [APA.Trial , APA_add.Trial];
     ResAPA.Trial = [ResAPA.Trial , ResAPA_add.Trial];
     TrialParams.Trial = [TrialParams.Trial , TrialParams_add.Trial];
@@ -452,8 +467,7 @@ try
     liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
     set(findobj('tag','listbox1'),'String',liste_marche);
     
-catch ERR
-    ERR_Charg
+catch ERR_Charg
     warning(ERR_Charg.identifier,['Annulation chargement fichiers / ',ERR_Charg.message])
     waitfor(warndlg('Annulation chargement fichiers!'));
 end
@@ -1239,7 +1253,7 @@ function Test_APA_v4_ResizeFcn(~, ~, ~)
 %% Group_APA_Callback - Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
 function Group_APA_Callback
 % Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
-global APA liste_marche Corridors corr1
+global APA TrialParams APA_N TrialParams_N APA_Corr TrialParams_Corr liste_marche  corr1
 % hObject    handle to Group_APA (see GCBO)
 
 %Choix du nom de la moyenne
@@ -1248,26 +1262,50 @@ tag_groupe = cell2mat(inputdlg('Entrez le nom du groupe d''acquisitions','Calcul
 %Sélections de l'utilisateur
 try
     
-    Corridors.Infos = APA.Infos;
-    Corridors.removedTrials = [];
+    APA_N.Infos = APA.Infos;
+    TrialParams_N.Infos = TrialParams.Infos;
+    APA_Corr.Infos = APA.Infos;
+    TrialParams_Corr.Infos = TrialParams.Infos;
+    
     champs = fieldnames(APA.Trial(1));
     for i_champs = 1 : length(champs)
-        clear Data_moy temp
-        max_nSamp = max(arrayfun(@(i) size(APA.Trial(i).(champs{i_champs}).Data,2),1:length(liste_marche)));
-        temp = arrayfun(@(i) cat(2,APA.Trial(i).(champs{i_champs}).Data,nan(size(APA.Trial(i).(champs{i_champs}).Data,1),max_nSamp - size(APA.Trial(i).(champs{i_champs}).Data,2))),...
-            1:length(liste_marche),'uni',0);
+        clear Data_moy temp 
+        APA_N = APA;
+        for i = 1 : length(APA_N.Trial)
+            if ~isempty(APA.Trial(i).(champs{i_champs}).Data)
+                [APA_N.Trial(i).(champs{i_champs}),TrialParams_N.Trial(i)] = Normalise_APA_signal(APA.Trial(i).(champs{i_champs}),TrialParams.Trial(i));
+            else
+                APA_N.Trial(i).(champs{i_champs}) = APA.Trial(i).(champs{i_champs});
+                APA_N.Trial(i).(champs{i_champs}).Data = zeros(size(APA_N.Trial(i).(champs{i_champs}).Data,1),401);
+                APA_N.Trial(i).(champs{i_champs}).Time = 1:size(APA_N.Trial(i).(champs{i_champs}).Data,2);
+            end
+        end
+        temp = arrayfun(@(i) APA_N.Trial(i).(champs{i_champs}).Data,1:length(liste_marche),'uni',0);
         Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
         Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
         Data_moy(:,:,3) = nanmean(cat(3,temp{:}),3) - nanstd(cat(3,temp{:}),[],3);
         
         %Stockage
         for j = 1:3
-            Corridors.Trial(j).(champs{i_champs}) = Signal(Data_moy(:,:,j),APA.Trial(1).(champs{i_champs}).Fech,...
-                'tag',APA.Trial(1).(champs{i_champs}).Tag,...
-                'units',APA.Trial(1).(champs{i_champs}).Units,...
+            APA_Corr.Trial(j).(champs{i_champs}) = Signal(Data_moy(:,:,j),APA_N.Trial(1).(champs{i_champs}).Fech,...
+                'time',1:size(Data_moy(:,:,j),2),...
+                'tag',APA_N.Trial(1).(champs{i_champs}).Tag,...
+                'units',APA_N.Trial(1).(champs{i_champs}).Units,...
                 'TrialNum',0,...
                 'TrialName',tag_groupe);
         end
+    end
+    
+    clear Data_moy temp
+    temp = arrayfun(@(i) TrialParams_N.Trial(i).EventsTime,1:length(liste_marche),'uni',0);
+    Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
+    Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
+    Data_moy(:,:,3) = nanmean(cat(3,temp{:}),3) - nanstd(cat(3,temp{:}),[],3);
+    for i = 1:3
+        TrialParams_Corr.Trial(i) = TrialParams_N.Trial(1);
+        TrialParams_Corr.Trial(i).EventsTime = Data_moy(:,:,j);
+        TrialParams_Corr.Trial(i).TrialNum = 0;
+        TrialParams_Corr.Trial(i).TrialName = tag_groupe;
     end
     
     %Affichage
@@ -1282,24 +1320,25 @@ try
     
 catch ERR
     warning(ERR.identifier,['Arret création groupe / ' ERR.message])
-    warndlg(['Arret création groupe' ERR]);
+    warndlg('Arret création groupe');
 end
 
 %% Affich_corridor_Callback - Affichage des corridors pour les données brutes
 % --- Executes on button press in Affich_corridor.
 function Affich_corridor_Callback
 % Affichage des corridors pour les données brutes
-global haxes1 haxes2 haxes3 haxes4 corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 Corridors
+global haxes1 haxes2 haxes3 haxes4 corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 ...
+    APA_Corr TrialParams_Corr h_marks_T0_C h_marks_HO_C h_marks_TO_C h_marks_FC1_C h_marks_FO2_C h_marks_FC2_C
 % hObject    handle to Affich_corridor (see GCBO)
 
 try
     if ~ishandle(corr1)
         % Affichage des courbes déplacements (CP) et Puissance/Acc
         set(gcf,'CurrentAxes',haxes1)
-        corr1 = plot(haxes1,Corridors.Trial(1).CP_Position.Time,Corridors.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
-        t = Corridors.Trial(1).CP_Position.Time;
+        corr1 = plot(haxes1,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
+        t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
-        T=[Corridors.Trial(3).CP_Position.Data(1,:)';Corridors.Trial(2).CP_Position.Data(1,:)'];
+        T=[APA_Corr.Trial(3).CP_Position.Data(1,:)';APA_Corr.Trial(2).CP_Position.Data(1,:)'];
         Noeuds=[N,T];
         P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
         handle_corr1=patch(...
@@ -1310,10 +1349,10 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes2)
-        corr2 = plot(haxes2,Corridors.Trial(1).CP_Position.Time,Corridors.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
-        t = Corridors.Trial(1).CP_Position.Time;
+        corr2 = plot(haxes2,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
+        t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
-        T=[Corridors.Trial(3).CP_Position.Data(2,:)';Corridors.Trial(2).CP_Position.Data(2,:)'];
+        T=[APA_Corr.Trial(3).CP_Position.Data(2,:)';APA_Corr.Trial(2).CP_Position.Data(2,:)'];
         Noeuds=[N,T];
         P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
         handle_corr2=patch(...
@@ -1324,10 +1363,10 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes3)
-        corr3 = plot(haxes3,Corridors.Trial(1).CG_Speed.Time,Corridors.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
-        t = Corridors.Trial(1).CG_Speed.Time;
+        corr3 = plot(haxes3,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
+        t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
-        T=[Corridors.Trial(3).CG_Speed.Data(1,:)';Corridors.Trial(2).CG_Speed.Data(1,:)'];
+        T=[APA_Corr.Trial(3).CG_Speed.Data(1,:)';APA_Corr.Trial(2).CG_Speed.Data(1,:)'];
         Noeuds=[N,T];
         P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
         handle_corr3=patch(...
@@ -1338,10 +1377,10 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes4)
-        corr4 = plot(haxes4,Corridors.Trial(1).CG_Speed.Time,Corridors.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
-        t = Corridors.Trial(1).CG_Speed.Time;
+        corr4 = plot(haxes4,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
+        t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
-        T=[Corridors.Trial(3).CG_Speed.Data(3,:)';Corridors.Trial(2).CG_Speed.Data(3,:)'];
+        T=[APA_Corr.Trial(3).CG_Speed.Data(3,:)';APA_Corr.Trial(2).CG_Speed.Data(3,:)'];
         Noeuds=[N,T];
         P=[(1:length(t)-1)',(2:length(t))',(length(t)+2:length(t)*2)',(length(t)+1:length(t)*2-1)'];
         handle_corr4=patch(...
@@ -1350,6 +1389,14 @@ try
             'facecolor',[0 0 1],...
             'edgecolor','none',...
             'FaceAlpha',0.3);
+        
+        %Actualisation des marqueurs
+        h_marks_T0_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(2),'--r');
+        h_marks_HO_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(3),'--k');
+        h_marks_TO_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(4),'--b');
+        h_marks_FC1_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(5),'--m');
+        h_marks_FO2_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(6),'--g');
+        h_marks_FC2_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(7),'--c');
     end
     
    
@@ -1364,6 +1411,12 @@ try
             set(handle_corr2,'Visible','off');
             set(handle_corr3,'Visible','off');
             set(handle_corr4,'Visible','off');
+            set(h_marks_T0_C,'Visible','off');
+            set(h_marks_HO_C,'Visible','off');
+            set(h_marks_TO_C,'Visible','off');
+            set(h_marks_FC1_C,'Visible','off');
+            set(h_marks_FO2_C,'Visible','off');
+            set(h_marks_FC2_C,'Visible','off');
         case 1
             set(corr1,'Visible','on');
             set(corr2,'Visible','on');
@@ -1373,6 +1426,12 @@ try
             set(handle_corr2,'Visible','on');
             set(handle_corr3,'Visible','on');
             set(handle_corr4,'Visible','on');
+            set(h_marks_T0_C,'Visible','on');
+            set(h_marks_HO_C,'Visible','on');
+            set(h_marks_TO_C,'Visible','on');
+            set(h_marks_FC1_C,'Visible','on');
+            set(h_marks_FO2_C,'Visible','on');
+            set(h_marks_FC2_C,'Visible','on');
     end
     
 catch ERR
@@ -1970,4 +2029,5 @@ for i = 1:nb_acq
     end
 end
 close(wb);
+
 
