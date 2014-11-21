@@ -1333,8 +1333,10 @@ global haxes1 haxes2 haxes3 haxes4 corr1 corr2 corr3 corr4 handle_corr1 handle_c
 
 try
     if ~ishandle(corr1)
+        
         % Affichage des courbes déplacements (CP) et Puissance/Acc
         set(gcf,'CurrentAxes',haxes1)
+        set(gca,'NextPlot','replace')
         corr1 = plot(haxes1,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
@@ -1349,6 +1351,7 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes2)
+        set(gca,'NextPlot','replace')
         corr2 = plot(haxes2,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
@@ -1363,6 +1366,7 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes3)
+        set(gca,'NextPlot','replace')
         corr3 = plot(haxes3,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
@@ -1377,6 +1381,7 @@ try
             'FaceAlpha',0.3);
         
         set(gcf,'CurrentAxes',haxes4)
+        set(gca,'NextPlot','replace')
         corr4 = plot(haxes4,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
