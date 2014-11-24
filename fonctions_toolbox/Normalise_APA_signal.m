@@ -44,7 +44,7 @@ end;
 APA_N = Signal1;
 APA_N.Data = cat(2,var_norm1,var_norm2,var_norm3,var_norm4);
 APA_N.Time = 1:size(APA_N.Data,2);
-APA_N.Fech = NaN;
+APA_N.Fech = 1;
 APA_N.Description = 'Time-Normalised';
 
 

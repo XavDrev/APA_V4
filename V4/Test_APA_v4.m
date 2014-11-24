@@ -22,7 +22,7 @@ function varargout = Test_APA_v4(varargin)
 
 % Edit the above text to modify the response to help Test_APA_v4
 
-% Last Modified by GUIDE v2.5 13-Nov-2014 16:48:13
+% Last Modified by GUIDE v2.5 24-Nov-2014 12:23:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -145,7 +145,7 @@ varargout{1} = handles.output;
 %% listbox1_Callback - Executes on selection change in listbox1.
 function listbox1_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 % Choix/Click dans la liste actualisée
-global haxes1 haxes2 haxes3 haxes4 haxes6 APA TrialParams ResAPA liste_marche acq_courante ...
+global haxes1 haxes2 haxes3 haxes4 haxes5 haxes6 APA TrialParams ResAPA liste_marche acq_courante ...
     flag_afficheV Notocord
 % hObject    handle to listbox1 (see GCBO)
 
@@ -298,6 +298,13 @@ ylabel(haxes3,'Axe antéro-postérieur (m/s)','FontName','Times New Roman','FontSi
 ylabel(haxes4,'Axe vertical(m/s)','FontName','Times New Roman','FontSize',10);
 xlabel(haxes6,'Temps (sec)','FontName','Times New Roman','FontSize',10);
 
+set(haxes1,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+set(haxes2,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+set(haxes5,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+set(haxes6,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+
 set(findobj('tag','text_cg'),'Visible','On');
 set(findobj('tag','Acc_txt'),'Visible','On');
 set(findobj('tag','Group_APA'),'Visible','On');
@@ -347,7 +354,7 @@ end
 function uipushtool1_ClickedCallback(~, ~, ~)
 % Choix fichier(s) (simple/multiple)
 % hObject    handle to uipushtool1 (see GCBO)
-global dossier_c3d APA TrialParams ResAPA Resultats Corridors Subject_data liste_marche Notocord
+global dossier_c3d APA TrialParams ResAPA APA_T TrialParams_T Subject_data liste_marche Notocord
 
 try
     %Choix manuel des fichiers
@@ -355,19 +362,12 @@ try
     
     %Initialisation
     Subject_data = {};
-    
-    % Conservation des vieux corridors/resulats ?
-    if ~isempty(Corridors) || ~isempty(Resultats)
-        button = questdlg('Conserver Resultats/Corridors existants?','Nouveau Sujet','Oui','Non','Non');
-        if strcmp(button,'Non')
-            Resultats = {};
-            Corridors = {};
-        end
-    end
-    
+        
     %Extraction des données d'intérêts
     button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
-    [APA TrialParams ResAPA] = Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
+    [APA_T TrialParams_T ResAPA] = Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
+    APA = APA_T;
+    TrialParams = TrialParams_T;
     
     % Mise à jour interface et activation des boutons
     set(findobj('tag','listbox1'), 'Visible','On');
@@ -397,10 +397,9 @@ try
     liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
     set(findobj('tag','listbox1'),'String',liste_marche);
     
+    set(findobj('tag','time_normalize'), 'Enable','On');
     if length(files)>1
         set(findobj('tag','Group_APA'), 'Enable','On');
-        set(findobj('tag','Clean_data'), 'Enable','On');
-        set(findobj('tag','Calc_batch'), 'Enable','On');
     end
     
 catch ERR_Charg
@@ -510,7 +509,7 @@ delete(get(haxes6,'Children'));
 %% uipushtool4_ClickedCallback - Chargement d'un fichier deja traité
 function uipushtool4_ClickedCallback(~, ~, ~)
 % Chargement d'un fichier deja traité
-global APA ResAPA TrialParams liste_marche acq_courante
+global APA ResAPA TrialParams APA_T TrialParams_T liste_marche acq_courante
 
 try
     
@@ -527,6 +526,8 @@ try
         eval(['load ' strrep(fullfile(dossier,var),'APA','TrialParams')]);
         eval(['TrialParams = ' strrep(var(1:end-4),'APA','TrialParams') ';'])  ;
     end
+    APA_T = APA;
+    TrialParams_T = TrialParams;
     
     % Mise à jour interface et activation des boutons
     set(findobj('tag','listbox1'), 'Visible','On');
@@ -550,10 +551,11 @@ try
     set(findobj('Tag','subject_info'),'Enable','On');
     set(findobj('Tag','Delete_current'),'Visible','On');
     
-    if length(liste_marche)>1
+    set(findobj('tag','time_normalize'), 'Visible','On');
+    set(findobj('tag','time_normalize'), 'Enable','On');
+    set(findobj('tag','Group_APA'), 'Visible','On');
+    if length(APA.Trial)>1 
         set(findobj('tag','Group_APA'), 'Enable','On');
-        set(findobj('tag','Clean_data'), 'Enable','On');
-        set(findobj('tag','Calc_batch'), 'Enable','On');
     end
     
     axess = findobj('Type','axes');
@@ -1250,10 +1252,51 @@ function Test_APA_v4_ResizeFcn(~, ~, ~)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%% Normalisation temporelle des données
+function normalise_time(hObject, eventdata, handles)
+
+global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N    
+
+champs = fieldnames(APA_T.Trial(1));
+APA_N = APA_T;
+TrialParams_N = TrialParams_T;
+for i_champs = 1 : length(champs)
+    for i = 1 : length(APA_N.Trial)
+        
+        if ~isempty(APA_T.Trial(i).(champs{i_champs}).Data) &&  ...
+                any(APA_T.Trial(i).(champs{i_champs}).Data(~isnan(APA_T.Trial(i).(champs{i_champs}).Data))~=0)
+            try
+                [APA_N.Trial(i).(champs{i_champs}),TrialParams_N.Trial(i)] = Normalise_APA_signal(APA_T.Trial(i).(champs{i_champs}),TrialParams_T.Trial(i));
+            catch
+                APA_N.Trial(i).(champs{i_champs}) = APA_T.Trial(i).(champs{i_champs});
+                APA_N.Trial(i).(champs{i_champs}).Data = zeros(size(APA_N.Trial(i).(champs{i_champs}).Data,1),401);
+                APA_N.Trial(i).(champs{i_champs}).Time = 1:size(APA_N.Trial(i).(champs{i_champs}).Data,2);
+            end
+        else
+            APA_N.Trial(i).(champs{i_champs}) = APA_T.Trial(i).(champs{i_champs});
+            APA_N.Trial(i).(champs{i_champs}).Data = zeros(size(APA_N.Trial(i).(champs{i_champs}).Data,1),401);
+            APA_N.Trial(i).(champs{i_champs}).Time = 1:size(APA_N.Trial(i).(champs{i_champs}).Data,2);
+        end
+    end
+end
+
+set(findobj('tag','normalized_time'),'Visible','on')
+set(findobj('tag','real_time'),'Visible','on')
+set(findobj('tag','normalized_time'),'Enable','on')
+set(findobj('tag','real_time'),'Enable','on')
+
+set(findobj('Tag','real_time'), 'Value',0);
+set(findobj('Tag','normalized_time'), 'Value',1);
+
+APA  = APA_N;
+TrialParams = TrialParams_N;
+listbox1_Callback(handles.listbox1, eventdata, handles)
+
+
 %% Group_APA_Callback - Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
 function Group_APA_Callback
 % Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
-global APA TrialParams APA_N TrialParams_N APA_Corr TrialParams_Corr liste_marche  corr1
+global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N APA_Corr TrialParams_Corr liste_marche  corr1
 % hObject    handle to Group_APA (see GCBO)
 
 %Choix du nom de la moyenne
@@ -1261,25 +1304,12 @@ tag_groupe = cell2mat(inputdlg('Entrez le nom du groupe d''acquisitions','Calcul
 
 %Sélections de l'utilisateur
 try
-    
-    APA_N.Infos = APA.Infos;
-    TrialParams_N.Infos = TrialParams.Infos;
     APA_Corr.Infos = APA.Infos;
     TrialParams_Corr.Infos = TrialParams.Infos;
     
     champs = fieldnames(APA.Trial(1));
     for i_champs = 1 : length(champs)
-        clear Data_moy temp 
-        APA_N = APA;
-        for i = 1 : length(APA_N.Trial)
-            if ~isempty(APA.Trial(i).(champs{i_champs}).Data)
-                [APA_N.Trial(i).(champs{i_champs}),TrialParams_N.Trial(i)] = Normalise_APA_signal(APA.Trial(i).(champs{i_champs}),TrialParams.Trial(i));
-            else
-                APA_N.Trial(i).(champs{i_champs}) = APA.Trial(i).(champs{i_champs});
-                APA_N.Trial(i).(champs{i_champs}).Data = zeros(size(APA_N.Trial(i).(champs{i_champs}).Data,1),401);
-                APA_N.Trial(i).(champs{i_champs}).Time = 1:size(APA_N.Trial(i).(champs{i_champs}).Data,2);
-            end
-        end
+        clear temp Data_moy
         temp = arrayfun(@(i) APA_N.Trial(i).(champs{i_champs}).Data,1:length(liste_marche),'uni',0);
         Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
         Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
@@ -1402,6 +1432,12 @@ try
         h_marks_FC1_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(5),'--m');
         h_marks_FO2_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(6),'--g');
         h_marks_FC2_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(7),'--c');
+        
+        set(haxes1,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+        set(haxes2,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+        set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+        set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
+
     end
     
    
@@ -1422,6 +1458,9 @@ try
             set(h_marks_FC1_C,'Visible','off');
             set(h_marks_FO2_C,'Visible','off');
             set(h_marks_FC2_C,'Visible','off');
+            axis(haxes1,'tight');
+            axis(haxes2,'tight');
+            
         case 1
             set(corr1,'Visible','on');
             set(corr2,'Visible','on');
@@ -2035,4 +2074,52 @@ for i = 1:nb_acq
 end
 close(wb);
 
+%% Graph selection
+function graph_zoom(hObject, ~, ~)
+% crée une nouvelle figure avec le graph à afficher dedans
+
+global  acq_courante
+
+h=get(hObject,'children');
+f=figure('Name',acq_courante);
+set(f,'Color',[1 1 1]) ;
+set(gca,'FontSize',12);
+h1=copyobj(h,gca);
+set(h1, 'LineWidth',2) ;
+ylabel(get(get(hObject,'YLabel'),'String'))
+xlabel('Temps (s)')
+
+%% bouton temps réel
+% --- Executes on button press in real_time.
+function real_time_Callback(hObject, eventdata, handles)
+% hObject    handle to real_time (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global APA TrialParams APA_T TrialParams_T 
+
+set(hObject, 'Value',1);
+set(findobj('Tag','normalized_time'), 'Value',0);
+
+APA = APA_T;
+TrialParams = TrialParams_T;
+listbox1_Callback(handles.listbox1, eventdata, handles)
+
+% Hint: get(hObject,'Value') returns toggle state of real_time
+
+%% bouton temps normalisé
+% --- Executes on button press in normalized_time.
+function normalized_time_Callback(hObject, eventdata, handles)
+% hObject    handle to normalized_time (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global APA TrialParams APA_N TrialParams_N
+
+set(findobj('Tag','real_time'), 'Value',0);
+set(hObject, 'Value',1);
+
+APA = APA_N;
+TrialParams = TrialParams_N;
+listbox1_Callback(handles.listbox1, eventdata, handles)
+
+% Hint: get(hObject,'Value') returns toggle state of normalized_time
 
