@@ -45,7 +45,8 @@ end
 %% Test_APA_v4_OpeningFcn -Funcion principale
 % --- Executes just before Test_APA_v4 is made visible.
 function Test_APA_v4_OpeningFcn(hObject, ~, handles, varargin)
-global haxes1 haxes2 haxes3 haxes4 haxes6 h_marks_T0 h_marks_HO h_marks_TO h_marks_FC1 h_marks_FO2 h_marks_FC2 Resultats
+global haxes1 haxes2 haxes3 haxes4 haxes6 h_marks_T0 h_marks_HO h_marks_TO ...
+    h_marks_FC1 h_marks_FO2 h_marks_FC2 Aff_corr
 % Funcion principale (Interface)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
@@ -89,7 +90,7 @@ h_marks_TO = [];
 h_marks_FC1 = [];
 h_marks_FO2 = [];
 h_marks_FC2= [];
-Resultats = {};
+Aff_corr = 0;
 
 %Initialisation des états d'affichages pour la vitesse
 set(findobj('tag','V_intgr'),'Value',1); %Intégration
@@ -182,18 +183,21 @@ plot(haxes2,APA.Trial(pos).CP_Position.Time,APA.Trial(pos).CP_Position.Data(2,:)
 
 flagPF=get(findobj('tag','PlotPF'),'Value');
 if ~flagPF
-    set(findobj('Tag','Acc_txt'),'String','Accélération/Puissance CG');
-    xlabel(haxes6,'Temps (s)','FontName','Times New Roman','FontSize',10);
-    plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
-    ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
+    try
+        set(findobj('Tag','Acc_txt'),'String','Accélération/Puissance CG');
+        xlabel(haxes6,'Temps (s)','FontName','Times New Roman','FontSize',10);
+        plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
+        ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
+    end
 else
-    set(findobj('Tag','Acc_txt'),'String','Trajectoire CP');
-    xlabel(haxes6,'Axe Antéropostérieur(mm)','FontName','Times New Roman','FontSize',10);
-    ylabel(haxes6,'Axe Médio-Latéral (mm)','FontName','Times New Roman','FontSize',10);
-    plot(haxes6,APA.Trial(pos).CP_Position.Data(2,:),APA.Trial(pos).CP_Position.Data(1,:)); %axis tight
-    set(haxes6,'YDir','reverse');
+    try
+        set(findobj('Tag','Acc_txt'),'String','Trajectoire CP');
+        xlabel(haxes6,'Axe Antéropostérieur(mm)','FontName','Times New Roman','FontSize',10);
+        ylabel(haxes6,'Axe Médio-Latéral (mm)','FontName','Times New Roman','FontSize',10);
+        plot(haxes6,APA.Trial(pos).CP_Position.Data(2,:),APA.Trial(pos).CP_Position.Data(1,:)); %axis tight
+        set(haxes6,'YDir','reverse');
+    end
 end
-
 %Affichage des vitesses en fonction des choix de l'utilisateur et présence de données dérivées
 flags_V = [get(findobj('tag','V_intgr'),'Value') get(findobj('tag','V_der'),'Value') get(findobj('tag','V_der_Vic'),'Value')];
 flag_afficheV = sum(flags_V); %Flag d'affichage
@@ -362,7 +366,7 @@ try
     
     %Initialisation
     Subject_data = {};
-        
+    
     %Extraction des données d'intérêts
     button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
     [APA_T TrialParams_T ResAPA] = Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
@@ -412,7 +416,7 @@ end
 % --- Ajout acquisitions au sujet courant
 function ajouter_acquisitions(~, ~, ~)
 % Ajouter des acquisitions au sujet en cour de traitement
-global dossier_c3d APA TrialParams ResAPA liste_marche 
+global dossier_c3d APA TrialParams ResAPA liste_marche
 
 try
     %Choix manuel des fichiers
@@ -425,7 +429,7 @@ try
     
     % On modifie le nom des acquisitions/fields similaires
     liste_new = arrayfun(@(i) APA_add.Trial(i).CP_Position.TrialName, 1:length(APA_add.Trial),'uni',0);
-     
+    
     [~,b,~] = matchcells(liste_marche,liste_new,'exact');
     if any(b==1)
         for i = 1 : length(b)
@@ -442,7 +446,7 @@ try
     liste_rem = arrayfun(@(i) APA.removedTrials(i).CP_Position.TrialName, 1:length(APA.removedTrials),'uni',0);
     
     [a,b,~] = matchcells(liste_rem,liste_new,'exact');
-    if any(b==1)       
+    if any(b==1)
         for i = 1 : length(b)
             if b(i)==1
                 warning(['Attention acquisition déjà supprimée / Données re-chargées pour :' APA_add.Trial(i).CP_Position.TrialName])
@@ -554,7 +558,7 @@ try
     set(findobj('tag','time_normalize'), 'Visible','On');
     set(findobj('tag','time_normalize'), 'Enable','On');
     set(findobj('tag','Group_APA'), 'Visible','On');
-    if length(APA.Trial)>1 
+    if length(APA.Trial)>1
         set(findobj('tag','Group_APA'), 'Enable','On');
     end
     
@@ -573,18 +577,19 @@ function uipushtool3_ClickedCallback(~, ~, ~)
 % hObject    handle to uipushtool3 (see GCBO)
 global APA TrialParams ResAPA
 
-chemin = uigetdir();
+[nom_fich,chemin] = uiputfile([APA.Infos.FileName '_APA']);
+
 eval([APA.Infos.FileName '_APA = APA;'])
-eval(['save(fullfile(chemin,[APA.Infos.FileName ''_APA.mat'']),''' APA.Infos.FileName '_APA'');'])
+eval(['save(fullfile(chemin,nom_fich),''' APA.Infos.FileName '_APA'');'])
 eval([APA.Infos.FileName '_ResAPA = ResAPA;'])
-eval(['save(fullfile(chemin,[ResAPA.Infos.FileName ''_ResAPA.mat'']),''' ResAPA.Infos.FileName '_ResAPA'');'])
+eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''ResAPA'')),''' ResAPA.Infos.FileName '_ResAPA'');'])
 eval([APA.Infos.FileName '_TrialParams = TrialParams;'])
-eval(['save(fullfile(chemin,[TrialParams.Infos.FileName ''_TrialParams.mat'']),''' TrialParams.Infos.FileName '_TrialParams'');'])
+eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''TrialParams'')),''' TrialParams.Infos.FileName '_TrialParams'');'])
 
 % Export Excel
 button = questdlg('Exporter sur Excel??','Sauvegarde résultats','Oui','Non','Non');
 if strcmp(button,'Oui')
-    fichier = [ResAPA.Infos.FileName '_ResAPA.xlsx'];
+    fichier = strrep(nom_fich,'APA.mat','ResAPA.xlsx');
     champs = fieldnames(ResAPA.Trial(1));
     Tab.tag(1,:) = [champs(end-2:end-1);champs(1:end-3)]';
     for i = 1 : length(ResAPA.Trial)
@@ -613,7 +618,7 @@ end
 %% T0_Callback - Choix T0 (1er évt Biomécanique)
 function T0_Callback(~, eventdata, handles)
 % Choix T0 (1er évt Biomécanique)
-global haxes3 haxes4 APA TrialParams liste_marche acq_courante h_marks_T0
+global haxes1 haxes2 haxes3 haxes4 APA TrialParams liste_marche acq_courante h_marks_T0
 % hObject    handle to T0 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -625,6 +630,12 @@ TrialParams.Trial(pos).EventsTime(2) = Manual_click(1);
 efface_marqueur_test(h_marks_T0);
 h_marks_T0=affiche_marqueurs(Manual_click(1),'-r');
 [~,I] = min(abs(APA.Trial(pos).CG_Speed.Time - TrialParams.Trial(pos).EventsTime(2)));
+APA.Trial(pos).CP_Position.Data(1,:) = APA.Trial(pos).CP_Position.Data(1,:) - mean(APA.Trial(pos).CP_Position.Data(1,1:I));
+ch = get(haxes1,'children');
+set(ch(end),'YData',APA.Trial(pos).CP_Position.Data(1,:));
+APA.Trial(pos).CP_Position.Data(2,:) = APA.Trial(pos).CP_Position.Data(2,:) - mean(APA.Trial(pos).CP_Position.Data(2,1:I));
+ch = get(haxes2,'children');
+set(ch(end),'YData',APA.Trial(pos).CP_Position.Data(2,:));
 APA.Trial(pos).CG_Speed.Data(3,:) = APA.Trial(pos).CG_Speed.Data(3,:) - APA.Trial(pos).CG_Speed.Data(3,I);
 ch = get(haxes4,'children');
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(3,:));
@@ -1255,7 +1266,7 @@ function Test_APA_v4_ResizeFcn(~, ~, ~)
 %% Normalisation temporelle des données
 function normalise_time(hObject, eventdata, handles)
 
-global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N    
+global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N
 
 champs = fieldnames(APA_T.Trial(1));
 APA_N = APA_T;
@@ -1296,7 +1307,8 @@ listbox1_Callback(handles.listbox1, eventdata, handles)
 %% Group_APA_Callback - Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
 function Group_APA_Callback
 % Moyennage des acquisitions sélectionnées et stockage dans une variable acquisition (Corridors)
-global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N APA_Corr TrialParams_Corr liste_marche  corr1
+global APA TrialParams APA_Corr TrialParams_Corr liste_marche
+
 % hObject    handle to Group_APA (see GCBO)
 
 %Choix du nom de la moyenne
@@ -1310,30 +1322,37 @@ try
     champs = fieldnames(APA.Trial(1));
     for i_champs = 1 : length(champs)
         clear temp Data_moy
-        temp = arrayfun(@(i) APA_N.Trial(i).(champs{i_champs}).Data,1:length(liste_marche),'uni',0);
+        dim_max = max(arrayfun(@(i) size(APA.Trial(i).(champs{i_champs}).Time,2),1:length(liste_marche),'uni',1));
+        for j_trial = 1 : length(liste_marche)
+            APA.Trial(j_trial).(champs{i_champs}).Data = cat(2,APA.Trial(j_trial).(champs{i_champs}).Data,...
+                nan(size(APA.Trial(j_trial).(champs{i_champs}).Data,1),dim_max - size(APA.Trial(j_trial).(champs{i_champs}).Data,2)));
+            APA.Trial(j_trial).(champs{i_champs}).Time = cat(2,APA.Trial(j_trial).(champs{i_champs}).Time,...
+                nan(1,dim_max - size(APA.Trial(j_trial).(champs{i_champs}).Time,2)));
+        end
+        temp = arrayfun(@(i) APA.Trial(i).(champs{i_champs}).Data,1:length(liste_marche),'uni',0);
         Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
         Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
         Data_moy(:,:,3) = nanmean(cat(3,temp{:}),3) - nanstd(cat(3,temp{:}),[],3);
         
         %Stockage
         for j = 1:3
-            APA_Corr.Trial(j).(champs{i_champs}) = Signal(Data_moy(:,:,j),APA_N.Trial(1).(champs{i_champs}).Fech,...
-                'time',1:size(Data_moy(:,:,j),2),...
-                'tag',APA_N.Trial(1).(champs{i_champs}).Tag,...
-                'units',APA_N.Trial(1).(champs{i_champs}).Units,...
+            APA_Corr.Trial(j).(champs{i_champs}) = Signal(Data_moy(:,:,j),APA.Trial(1).(champs{i_champs}).Fech,...
+                'time',(1:size(Data_moy(:,:,j),2))/APA.Trial(1).(champs{i_champs}).Fech,...
+                'tag',APA.Trial(1).(champs{i_champs}).Tag,...
+                'units',APA.Trial(1).(champs{i_champs}).Units,...
                 'TrialNum',0,...
                 'TrialName',tag_groupe);
         end
     end
     
     clear Data_moy temp
-    temp = arrayfun(@(i) TrialParams_N.Trial(i).EventsTime,1:length(liste_marche),'uni',0);
-    Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
-    Data_moy(:,:,2) = nanmean(cat(3,temp{:}),3) + nanstd(cat(3,temp{:}),[],3);
-    Data_moy(:,:,3) = nanmean(cat(3,temp{:}),3) - nanstd(cat(3,temp{:}),[],3);
+    temp = arrayfun(@(i) TrialParams.Trial(i).EventsTime,1:length(liste_marche),'uni',0);
+    Data_moy(:,:,1) = nanmean(cat(1,temp{:}),1);
+    Data_moy(:,:,2) = nanmean(cat(1,temp{:}),1) + nanstd(cat(1,temp{:}),[],1);
+    Data_moy(:,:,3) = nanmean(cat(1,temp{:}),1) - nanstd(cat(1,temp{:}),[],1);
     for i = 1:3
-        TrialParams_Corr.Trial(i) = TrialParams_N.Trial(1);
-        TrialParams_Corr.Trial(i).EventsTime = Data_moy(:,:,j);
+        TrialParams_Corr.Trial(i) = TrialParams.Trial(1);
+        TrialParams_Corr.Trial(i).EventsTime = Data_moy(:,:,i);
         TrialParams_Corr.Trial(i).TrialNum = 0;
         TrialParams_Corr.Trial(i).TrialName = tag_groupe;
     end
@@ -1345,7 +1364,7 @@ try
     set(findobj('tag','Clean_corridor'), 'Visible','On');
     set(findobj('tag','Clean_corridor'), 'Enable','On');
     set(findobj('tag','Affich_corridor'), 'Value',1);
-    corr1 = 200;
+    
     Affich_corridor_Callback;
     
 catch ERR
@@ -1355,18 +1374,21 @@ end
 
 %% Affich_corridor_Callback - Affichage des corridors pour les données brutes
 % --- Executes on button press in Affich_corridor.
-function Affich_corridor_Callback
+function [corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 ] = Affich_corridor_Callback(corr1);
 % Affichage des corridors pour les données brutes
-global haxes1 haxes2 haxes3 haxes4 corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 ...
+global haxes1 haxes2 haxes3 haxes4 Aff_corr ...
     APA_Corr TrialParams_Corr h_marks_T0_C h_marks_HO_C h_marks_TO_C h_marks_FC1_C h_marks_FO2_C h_marks_FC2_C
 % hObject    handle to Affich_corridor (see GCBO)
 
 try
-    if ~ishandle(corr1)
+    if ~isempty(APA_Corr)
         
         % Affichage des courbes déplacements (CP) et Puissance/Acc
         set(gcf,'CurrentAxes',haxes1)
         set(gca,'NextPlot','replace')
+        if Aff_corr
+            set(gca,'NextPlot','add')
+        end
         corr1 = plot(haxes1,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
@@ -1382,6 +1404,9 @@ try
         
         set(gcf,'CurrentAxes',haxes2)
         set(gca,'NextPlot','replace')
+        if Aff_corr
+            set(gca,'NextPlot','add')
+        end
         corr2 = plot(haxes2,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
@@ -1397,6 +1422,9 @@ try
         
         set(gcf,'CurrentAxes',haxes3)
         set(gca,'NextPlot','replace')
+        if Aff_corr
+            set(gca,'NextPlot','add')
+        end
         corr3 = plot(haxes3,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
@@ -1412,6 +1440,9 @@ try
         
         set(gcf,'CurrentAxes',haxes4)
         set(gca,'NextPlot','replace')
+        if Aff_corr
+            set(gca,'NextPlot','add')
+        end
         corr4 = plot(haxes4,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
@@ -1437,10 +1468,10 @@ try
         set(haxes2,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
-
+        Aff_corr = 1;
     end
     
-   
+    
     ind_corr = get(findobj('tag','Affich_corridor'),'Value');
     switch ind_corr
         case 0
@@ -1477,7 +1508,6 @@ try
             set(h_marks_FO2_C,'Visible','on');
             set(h_marks_FC2_C,'Visible','on');
     end
-    
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
     warning(ERR.identifier,ERR.message)
@@ -1962,7 +1992,7 @@ for i = 1:nb_acq
                 intgrf = fnint(y_t); % on intègre
                 V_new(:,ii)= fnval(intgrf,t_PF);
             catch ERR % sinon par intégration numérique par la méthode des trapèzes
-                dips(ERR)
+                disp(ERR)
                 V_new(:,ii) = cumtrapz(t_PF,y); %Intégration grossière par la méthode des trapèzes
             end
         end
@@ -2095,7 +2125,7 @@ function real_time_Callback(hObject, eventdata, handles)
 % hObject    handle to real_time (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global APA TrialParams APA_T TrialParams_T 
+global APA TrialParams APA_T TrialParams_T
 
 set(hObject, 'Value',1);
 set(findobj('Tag','normalized_time'), 'Value',0);
