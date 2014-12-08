@@ -312,6 +312,10 @@ set(haxes6,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject
 set(findobj('tag','text_cg'),'Visible','On');
 set(findobj('tag','Acc_txt'),'Visible','On');
 set(findobj('tag','Group_APA'),'Visible','On');
+set(findobj('tag','time_normalize'), 'Visible','On');
+set(findobj('tag','real_time'), 'Visible','On');
+
+set(findobj('tag','normalized_time'), 'Visible','On');
 set(findobj('tag','Calc_current'),'Visible','On');
 set(findobj('tag','Calc_batch'),'Visible','On');
 set(findobj('tag','Clean_data'), 'Visible','On');
@@ -402,6 +406,7 @@ try
     set(findobj('tag','listbox1'),'String',liste_marche);
     
     set(findobj('tag','time_normalize'), 'Enable','On');
+    set(findobj('tag','real_time'), 'Enable','On');
     if length(files)>1
         set(findobj('tag','Group_APA'), 'Enable','On');
     end
@@ -1469,44 +1474,44 @@ try
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         Aff_corr = 1;
-    end
-    
-    
-    ind_corr = get(findobj('tag','Affich_corridor'),'Value');
-    switch ind_corr
-        case 0
-            set(corr1,'Visible','off');
-            set(corr2,'Visible','off');
-            set(corr3,'Visible','off');
-            set(corr4,'Visible','off');
-            set(handle_corr1,'Visible','off');
-            set(handle_corr2,'Visible','off');
-            set(handle_corr3,'Visible','off');
-            set(handle_corr4,'Visible','off');
-            set(h_marks_T0_C,'Visible','off');
-            set(h_marks_HO_C,'Visible','off');
-            set(h_marks_TO_C,'Visible','off');
-            set(h_marks_FC1_C,'Visible','off');
-            set(h_marks_FO2_C,'Visible','off');
-            set(h_marks_FC2_C,'Visible','off');
-            axis(haxes1,'tight');
-            axis(haxes2,'tight');
-            
-        case 1
-            set(corr1,'Visible','on');
-            set(corr2,'Visible','on');
-            set(corr3,'Visible','on');
-            set(corr4,'Visible','on');
-            set(handle_corr1,'Visible','on');
-            set(handle_corr2,'Visible','on');
-            set(handle_corr3,'Visible','on');
-            set(handle_corr4,'Visible','on');
-            set(h_marks_T0_C,'Visible','on');
-            set(h_marks_HO_C,'Visible','on');
-            set(h_marks_TO_C,'Visible','on');
-            set(h_marks_FC1_C,'Visible','on');
-            set(h_marks_FO2_C,'Visible','on');
-            set(h_marks_FC2_C,'Visible','on');
+        
+        
+        ind_corr = get(findobj('tag','Affich_corridor'),'Value');
+        switch ind_corr
+            case 0
+                set(corr1,'Visible','off');
+                set(corr2,'Visible','off');
+                set(corr3,'Visible','off');
+                set(corr4,'Visible','off');
+                set(handle_corr1,'Visible','off');
+                set(handle_corr2,'Visible','off');
+                set(handle_corr3,'Visible','off');
+                set(handle_corr4,'Visible','off');
+                set(h_marks_T0_C,'Visible','off');
+                set(h_marks_HO_C,'Visible','off');
+                set(h_marks_TO_C,'Visible','off');
+                set(h_marks_FC1_C,'Visible','off');
+                set(h_marks_FO2_C,'Visible','off');
+                set(h_marks_FC2_C,'Visible','off');
+                axis(haxes1,'tight');
+                axis(haxes2,'tight');
+                
+            case 1
+                set(corr1,'Visible','on');
+                set(corr2,'Visible','on');
+                set(corr3,'Visible','on');
+                set(corr4,'Visible','on');
+                set(handle_corr1,'Visible','on');
+                set(handle_corr2,'Visible','on');
+                set(handle_corr3,'Visible','on');
+                set(handle_corr4,'Visible','on');
+                set(h_marks_T0_C,'Visible','on');
+                set(h_marks_HO_C,'Visible','on');
+                set(h_marks_TO_C,'Visible','on');
+                set(h_marks_FC1_C,'Visible','on');
+                set(h_marks_FO2_C,'Visible','on');
+                set(h_marks_FC2_C,'Visible','on');
+        end
     end
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
