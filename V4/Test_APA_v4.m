@@ -287,7 +287,9 @@ if get(findobj('tag','Automatik_display'),'Value') %% Si bouton Affichage automa
     end
 end
 
-Affich_corridor_Callback;
+if  get(findobj('tag','Affich_corridor'),'Value')
+    Affich_corridor_Callback;
+end
 
 set(haxes1,'XTick',NaN);
 set(haxes2,'XTick',NaN);
@@ -562,6 +564,7 @@ try
     
     set(findobj('tag','time_normalize'), 'Visible','On');
     set(findobj('tag','time_normalize'), 'Enable','On');
+    set(findobj('tag','real_time'), 'Enable','On');
     set(findobj('tag','Group_APA'), 'Visible','On');
     if length(APA.Trial)>1
         set(findobj('tag','Group_APA'), 'Enable','On');
@@ -1333,6 +1336,15 @@ try
                 nan(size(APA.Trial(j_trial).(champs{i_champs}).Data,1),dim_max - size(APA.Trial(j_trial).(champs{i_champs}).Data,2)));
             APA.Trial(j_trial).(champs{i_champs}).Time = cat(2,APA.Trial(j_trial).(champs{i_champs}).Time,...
                 nan(1,dim_max - size(APA.Trial(j_trial).(champs{i_champs}).Time,2)));
+            if matchcell(champs(i_champs),{'CP_Position'})
+                if matchcell({TrialParams.Trial(j_trial).StartingFoot},{'left'})
+                    signe = -1;
+                else
+                    signe = 1;
+                end
+                APA.Trial(j_trial).(champs{i_champs}).Data(2,:) = signe*APA.Trial(j_trial).(champs{i_champs}).Data(2,:);
+            end
+            
         end
         temp = arrayfun(@(i) APA.Trial(i).(champs{i_champs}).Data,1:length(liste_marche),'uni',0);
         Data_moy(:,:,1) = nanmean(cat(3,temp{:}),3);
@@ -1369,9 +1381,9 @@ try
     set(findobj('tag','Clean_corridor'), 'Visible','On');
     set(findobj('tag','Clean_corridor'), 'Enable','On');
     set(findobj('tag','Affich_corridor'), 'Value',1);
-    
-    Affich_corridor_Callback;
-    
+    if  get(findobj('tag','Affich_corridor'),'Value')
+        Affich_corridor_Callback;
+    end
 catch ERR
     warning(ERR.identifier,['Arret création groupe / ' ERR.message])
     warndlg('Arret création groupe');
@@ -1473,45 +1485,7 @@ try
         set(haxes2,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
-        Aff_corr = 1;
-        
-        
-        ind_corr = get(findobj('tag','Affich_corridor'),'Value');
-        switch ind_corr
-            case 0
-                set(corr1,'Visible','off');
-                set(corr2,'Visible','off');
-                set(corr3,'Visible','off');
-                set(corr4,'Visible','off');
-                set(handle_corr1,'Visible','off');
-                set(handle_corr2,'Visible','off');
-                set(handle_corr3,'Visible','off');
-                set(handle_corr4,'Visible','off');
-                set(h_marks_T0_C,'Visible','off');
-                set(h_marks_HO_C,'Visible','off');
-                set(h_marks_TO_C,'Visible','off');
-                set(h_marks_FC1_C,'Visible','off');
-                set(h_marks_FO2_C,'Visible','off');
-                set(h_marks_FC2_C,'Visible','off');
-                axis(haxes1,'tight');
-                axis(haxes2,'tight');
-                
-            case 1
-                set(corr1,'Visible','on');
-                set(corr2,'Visible','on');
-                set(corr3,'Visible','on');
-                set(corr4,'Visible','on');
-                set(handle_corr1,'Visible','on');
-                set(handle_corr2,'Visible','on');
-                set(handle_corr3,'Visible','on');
-                set(handle_corr4,'Visible','on');
-                set(h_marks_T0_C,'Visible','on');
-                set(h_marks_HO_C,'Visible','on');
-                set(h_marks_TO_C,'Visible','on');
-                set(h_marks_FC1_C,'Visible','on');
-                set(h_marks_FO2_C,'Visible','on');
-                set(h_marks_FC2_C,'Visible','on');
-        end
+        Aff_corr = 1;     
     end
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
