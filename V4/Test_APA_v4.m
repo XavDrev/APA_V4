@@ -585,14 +585,14 @@ function uipushtool3_ClickedCallback(~, ~, ~)
 % hObject    handle to uipushtool3 (see GCBO)
 global APA TrialParams ResAPA
 
-[nom_fich,chemin] = uiputfile([APA.Infos.FileName '_APA']);
+[nom_fich,chemin] = uiputfile('*.mat','Nom Du fichier à sauvegarder',[APA.Infos.FileName '_APA']);
 
 eval([APA.Infos.FileName '_APA = APA;'])
-eval(['save(fullfile(chemin,nom_fich),''' APA.Infos.FileName '_APA'');'])
+eval(['save(fullfile(chemin,nom_fich),''' APA.Infos.FileName '_APA'',''-mat'');'])
 eval([APA.Infos.FileName '_ResAPA = ResAPA;'])
-eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''ResAPA'')),''' ResAPA.Infos.FileName '_ResAPA'');'])
+eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''ResAPA'')),''' ResAPA.Infos.FileName '_ResAPA'',''-mat'');'])
 eval([APA.Infos.FileName '_TrialParams = TrialParams;'])
-eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''TrialParams'')),''' TrialParams.Infos.FileName '_TrialParams'');'])
+eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''TrialParams'')),''' TrialParams.Infos.FileName '_TrialParams'',''-mat'');'])
 
 % Export Excel
 button = questdlg('Exporter sur Excel??','Sauvegarde résultats','Oui','Non','Non');
@@ -640,15 +640,19 @@ h_marks_T0=affiche_marqueurs(Manual_click(1),'-r');
 [~,I] = min(abs(APA.Trial(pos).CG_Speed.Time - TrialParams.Trial(pos).EventsTime(2)));
 APA.Trial(pos).CP_Position.Data(1,:) = APA.Trial(pos).CP_Position.Data(1,:) - mean(APA.Trial(pos).CP_Position.Data(1,1:I));
 ch = get(haxes1,'children');
+set(ch(end),'XData',APA.Trial(pos).CP_Position.Time);
 set(ch(end),'YData',APA.Trial(pos).CP_Position.Data(1,:));
 APA.Trial(pos).CP_Position.Data(2,:) = APA.Trial(pos).CP_Position.Data(2,:) - mean(APA.Trial(pos).CP_Position.Data(2,1:I));
 ch = get(haxes2,'children');
+set(ch(end),'XData',APA.Trial(pos).CP_Position.Time);
 set(ch(end),'YData',APA.Trial(pos).CP_Position.Data(2,:));
 APA.Trial(pos).CG_Speed.Data(3,:) = APA.Trial(pos).CG_Speed.Data(3,:) - APA.Trial(pos).CG_Speed.Data(3,I);
 ch = get(haxes4,'children');
+set(ch(end),'XData',APA.Trial(pos).CG_Speed.Time);
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(3,:));
 APA.Trial(pos).CG_Speed.Data(1,:) = APA.Trial(pos).CG_Speed.Data(1,:) - APA.Trial(pos).CG_Speed.Data(1,I);
 ch = get(haxes3,'children');
+set(ch(end),'XData',APA.Trial(pos).CG_Speed.Time);
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(1,:));
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
@@ -1028,7 +1032,7 @@ end
 
 %Affichage des APA et vitesses
 try
-    h_marks_APAy1 = plot(haxes1,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy(2)),APA.Trial(pos).CP_Position.Data(1,ResAPA.Trial(pos).APAy(2)),'x','Markersize',11);
+    h_marks_APAy1 = plot(haxes1,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy(2)),APA.Trial(pos).CP_Position.Data(1,ResAPA.Trial(pos).APAy(2)),'x','Markersize',11,'Color','b');
     h_marks_APAy2 = plot(haxes2,APA.Trial(pos).CP_Position.Time(ResAPA.Trial(pos).APAy_lateral(2)),APA.Trial(pos).CP_Position.Data(2,ResAPA.Trial(pos).APAy_lateral(2)),'x','Markersize',11);
 catch NO_APA
     warning(NO_APA.identifier,['NO_APA' NO_APA.message])
@@ -1956,7 +1960,7 @@ for i = 1:nb_acq
         
         %Préconditionnement du vecteur réaction sur la bonne durée (pour l'intégration)
         Fin_pf = find(Fres(:,3)<15,1,'first');
-        if Fin_pf<length(Fres)/3
+        if  isempty(Fin_pf)
             Fin_pf = length(Fres);
         end
         Fres = (Fres - repmat(P,length(Fres),1))./(P(3)/gravite); % Vecteur (GRF - P) à integré
