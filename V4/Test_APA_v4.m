@@ -177,17 +177,24 @@ for i=1:length(axess)
     end
 end
 
+t = APA.Trial(pos).CP_Position.Time;
+Fin = length(t);
+TFin = floor(2*t(end))/2+0.5;
+
 % Affichage des courbes déplacements (CP) et Puissance/Acc
-plot(haxes1,APA.Trial(pos).CP_Position.Time,APA.Trial(pos).CP_Position.Data(1,:)); axis(haxes1,'tight');
-plot(haxes2,APA.Trial(pos).CP_Position.Time,APA.Trial(pos).CP_Position.Data(2,:)); axis(haxes2,'tight');
+plot(haxes1,t,APA.Trial(pos).CP_Position.Data(1,1:Fin)); axis(haxes1,'tight');
+xlim(haxes1,[0 TFin])
+plot(haxes2,t,APA.Trial(pos).CP_Position.Data(2,1:Fin)); axis(haxes2,'tight');
+xlim(haxes2,[0 TFin])
 
 flagPF=get(findobj('tag','PlotPF'),'Value');
 if ~flagPF
     try
         set(findobj('Tag','Acc_txt'),'String','Accélération/Puissance CG');
         xlabel(haxes6,'Temps (s)','FontName','Times New Roman','FontSize',10);
-        plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
+        plot(haxes6,t,APA.Trial(pos).CG_Power.Data(1:Fin)); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
+        xlim([0 TFin])
     end
 else
     try
@@ -206,14 +213,15 @@ flag_afficheV = sum(flags_V); %Flag d'affichage
 Fech = APA.Trial(pos).CP_Position.Fech;
 T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech);
 FC2 = round(TrialParams.Trial(pos).EventsTime(7)*Fech);
-
+if isnan(FC2)
+    FC2 = size(APA.Trial(pos).GroundWrench.Time,2);
+end
 Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
 Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
 Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
 Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
 
-t = APA.Trial(pos).CG_Speed.Time;
-Fin = length(t);
+
 switch flag_afficheV
     case 0 %Aucune sélection
         plot(haxes3,t,zeros(1,length(t)),'Color','w');
@@ -221,40 +229,52 @@ switch flag_afficheV
     case 1
         if flags_V(2) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
+            xlim([0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         elseif flags_V(3) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
+            xlim([0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         else %Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
+            xlim([0 TFin])
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
     case 2 % 2 courbes sur 3
         if flags_V(2) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
+            xlim([0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(3) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
+            xlim([0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(1)%Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
+            xlim([0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
+            xlim([0 TFin])
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
@@ -268,7 +288,9 @@ switch flag_afficheV
         
         afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
         set(haxes3,'ylim',[min([Min_AP Min_AP_D]) max([Max_AP Max_AP_D])]);
+        xlim([0 TFin])
         set(haxes4,'ylim',[min([Min_Z Min_Z_D]) max([Max_Z Max_Z_D])]);
+        xlim([0 TFin])
 end
 
 % Si affichage automatique 'On'
@@ -556,7 +578,7 @@ try
     set(findobj('tag','Affich_corridor'), 'Visible','On');
     set(findobj('tag','PlotPF'), 'Visible','On');
     
-    set(findobj('tag','pushbutton20','Visible','On'));
+    set(findobj('tag','pushbutton20'),'Visible','On');
     
     set(findobj('Tag','sujet_courant'),'Enable','On');
     set(findobj('Tag','subject_info'),'Enable','On');
@@ -1106,10 +1128,12 @@ param = fieldnames(Acq);
 CR=cell(length(param),2);
 for i=1:length(param)
     CR{i,1} = param{i};
-    if ischar(Acq.(param{i}))
-        CR{i,2} = Acq.(param{i});
-    elseif isnumeric(Acq.(param{i}))
-        CR{i,2} = Acq.(param{i})(1);
+    try
+        if ischar(Acq.(param{i}))
+            CR{i,2} = Acq.(param{i});
+        elseif isnumeric(Acq.(param{i}))
+            CR{i,2} = Acq.(param{i})(1);
+        end
     end
 end
 set(findobj('tag','Results'),'Data',CR);
@@ -1489,7 +1513,7 @@ try
         set(haxes2,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
-        Aff_corr = 1;     
+        Aff_corr = 1;
     end
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
@@ -1639,18 +1663,19 @@ set(findobj('tag','listbox1'),'String',liste_marche);
 % --- Executes on button press in PlotPF.
 function PlotPF_Callback(~, ~, ~)
 % Affichage de la trajectoire du CP sur la PF
-global haxes6 APA
+global haxes6 APA liste_marche acq_courante
 % hObject    handle to PlotPF (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of PlotPF
+pos = matchcells(liste_marche,{acq_courante});
 
 flagPF=get(findobj('tag','PlotPF'),'Value');
 set(haxes6,'NextPlot','replace');
 if flagPF
     set(findobj('Tag','Acc_txt'),'String','Trajectoire CP');
-    plot(haxes6,Sujet.(acq_courante).CP_AP,Sujet.(acq_courante).CP_ML);
+    plot(haxes6,APA.Trial(pos).CP_Position.Data(1,:),APA.Trial(pos).CP_Position.Data(2,:));
     xlabel(haxes6,'Axe Antéropostérieur(mm)','FontName','Times New Roman','FontSize',10);
     ylabel(haxes6,'Axe Médio-Latéral (mm)','FontName','Times New Roman','FontSize',10);
     set(haxes6,'YDir','Reverse');
@@ -1658,12 +1683,9 @@ else
     set(findobj('Tag','Acc_txt'),'String','Accélération/Puissance CG');
     xlabel(haxes6,'Temps (s)','FontName','Times New Roman','FontSize',10);
     try
-        plot(haxes6,Sujet.(acq_courante).t,Sujet.(acq_courante).Puissance_CG); afficheY_v2(0,':k',haxes6);
+        plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
-    catch Err
-        warning(Err.identifier,Err.message)
-        plot(haxes6,Sujet.(acq_courante).t,Sujet.(acq_courante).Acc_Z); afficheY_v2(0,':k',haxes6);
-        ylabel(haxes6,'Axe vertical(m²/s)','FontName','Times New Roman','FontSize',10);
+    catch Err_Power
     end
 end
 
