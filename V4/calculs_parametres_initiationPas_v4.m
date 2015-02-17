@@ -86,8 +86,8 @@ try
     %% Durée du 2ème pas (entre FO2 et FC2)
     Trial_Res_APA.t_step2 = tMarkers(7) - tMarkers(6);
     
-    %% Durée du cycle de marche (entre T0 et FO2)
-    Trial_Res_APA.t_cycle_marche = tMarkers(7) - tMarkers(2);
+    %% Durée du cycle de marche (entre TO et FO2)
+    Trial_Res_APA.t_cycle_marche = tMarkers(7) - tMarkers(4);
     
     %% Longueur du pas
     Trial_Res_APA.Longueur_pas = range(Trial_APA.CP_Position.Data(1,round(tMarkers(5)*Fech):round(tMarkers(6)*Fech)));
@@ -103,10 +103,10 @@ try
     Trial_Res_APA.t_VyFO1 = tMarkers(4) - t_0;
     
     %% Temps pour atteindre Vm
-    Trial_Res_APA.t_Vm = t_0 + Trial_Res_APA.Vm(1)/Fech - tMarkers(1);
+    Trial_Res_APA.t_Vm =  Trial_Res_APA.Vm(1)/Fech - tMarkers(1);
     
     %% Vitesse Médiolatéral du CG
-    Trial_Res_APA.VML_absolue = abs(mean(Trial_APA.CG_Speed.Data(2,round(tMarkers(3)*Fech):end-5)));
+    Trial_Res_APA.VML_absolue = abs(mean(Trial_APA.CG_Speed.Data(2,round(tMarkers(4)*Fech):end-5)));
     
     %% Fréquence d'initiation du pas
     Trial_Res_APA.Freq_InitiationPas = (tMarkers(7) - tMarkers(4))^-1;
@@ -121,10 +121,10 @@ try
     Trial_Res_APA.Freinage = abs(Trial_Res_APA.Diff_V*1e2/Trial_Res_APA.V1(1));
     
     %% Durée de la chute du CG
-    Trial_Res_APA.t_chute = (t_0 + Trial_Res_APA.V1(2)/Fech) - tMarkers(4);
+    Trial_Res_APA.t_chute = Trial_Res_APA.V1(2)/Fech - tMarkers(4);
     
     %% Durée du freinage
-    Trial_Res_APA.t_freinage = tMarkers(5) - (t_0 + Trial_Res_APA.V1(2)/Fech);
+    Trial_Res_APA.t_freinage = tMarkers(5) - Trial_Res_APA.V1(2)/Fech;
     
     %% Temps pour atteindre V1
     Trial_Res_APA.t_V1 = Trial_Res_APA.V1(2)/Fech;
