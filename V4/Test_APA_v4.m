@@ -77,12 +77,13 @@ ylabel(haxes3,'Axe antéro-postérieur (m/s)','FontName','Times New Roman','FontSi
 set(haxes3,'Visible','Off');
 
 ylabel(haxes4,'Axe vertical(m/s)','FontName','Times New Roman','FontSize',10);
-set(haxes4,'Visible','Off');
 xlabel(haxes4,'Temps (sec)','FontName','Times New Roman','FontSize',10);
+set(haxes4,'Visible','Off');
 
 ylabel(haxes6,'Axe vertical(m²/s)','FontName','Times New Roman','FontSize',10);
-set(haxes6,'Visible','Off');
 xlabel(haxes6,'Temps (sec)','FontName','Times New Roman','FontSize',10);
+set(haxes6,'Visible','Off');
+
 
 h_marks_T0 = [];
 h_marks_HO = [];
@@ -211,7 +212,7 @@ flag_afficheV = sum(flags_V); %Flag d'affichage
 
 % Extraction des maximas/minimas pour affichage des vitesses dans la bonne échelle
 Fech = APA.Trial(pos).CP_Position.Fech;
-T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech);
+T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech)+1;
 FC2 = round(TrialParams.Trial(pos).EventsTime(7)*Fech);
 if isnan(FC2)
     FC2 = size(APA.Trial(pos).GroundWrench.Time,2);
@@ -1642,9 +1643,16 @@ global APA ResAPA TrialParams liste_marche acq_courante
 pos = matchcells(liste_marche,{acq_courante});
 
 %Supression de l'acquisition séléctionné
-APA.removedTrials = [APA.removedTrials,APA.Trial(pos)];
-ResAPA.removedTrials = [ResAPA.removedTrials,ResAPA.Trial(pos)];
-TrialParams.removedTrials = [TrialParams.removedTrials,TrialParams.Trial(pos)];
+if isfield(APA,'removedTrials')
+    APA.removedTrials = [APA.removedTrials,APA.Trial(pos)];
+    ResAPA.removedTrials = [ResAPA.removedTrials,ResAPA.Trial(pos)];
+    TrialParams.removedTrials = [TrialParams.removedTrials,TrialParams.Trial(pos)];
+else
+    APA.removedTrials = APA.Trial(pos);
+    ResAPA.removedTrials = ResAPA.Trial(pos);
+    TrialParams.removedTrials = TrialParams.Trial(pos);
+end
+
 num_Trial = arrayfun(@(i) APA.Trial(i).CP_Position.TrialNum,1:length(APA.Trial));
 num_remTrial = arrayfun(@(i) APA.removedTrials(i).CP_Position.TrialNum,1:length(APA.removedTrials));
 [~,ind_supp_tri] = sort(unique(num_remTrial));
@@ -2097,6 +2105,7 @@ for i = 1:nb_acq
         
         Trial_Res_APA = calcul_auto_APA_marker(Trial_APA, Trial_TrialParams,Trial_Res_APA);
         Trial_Res_APA = calculs_parametres_initiationPas_v4(Trial_APA, Trial_TrialParams,Trial_Res_APA);
+        Trial_TrialParams.StartingFoot = Trial_Res_APA.Cote;
         
         cpt = cpt+1;
         APA.Trial(cpt) = Trial_APA;

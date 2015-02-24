@@ -59,9 +59,11 @@ try
     [bbs,stats]=robustfit(Trial_APA.CP_Position.Time(round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)),Trial_APA.CP_Position.Data(2,round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)));
     signe = bbs(2);
     if signe>0
-        Trial_Res_APA.Cote = 'Gauche';
+        Trial_Res_APA.Cote = 'Left';
+    elseif signe<0
+        Trial_Res_APA.Cote = 'Right';
     else
-        Trial_Res_APA.Cote = 'Droit';
+        Trial_Res_APA.Cote = '';
     end
     
     %% Temps de réaction (entre l'instruction et le décollement du talon)
