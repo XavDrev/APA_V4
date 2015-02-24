@@ -1,35 +1,35 @@
-function varargout = Test_APA_v4(varargin)
-% TEST_APA_V4 MATLAB code for Test_APA_v4.fig
-%      TEST_APA_V4, by itself, creates a new TEST_APA_V4 or raises the existing
+function varargout = Test_APA_v5(varargin)
+% TEST_APA_V5 MATLAB code for Test_APA_v5.fig
+%      TEST_APA_V5, by itself, creates a new TEST_APA_V5 or raises the existing
 %      singleton*.
 %
-%      H = TEST_APA_V4 returns the handle to a new TEST_APA_V4 or the handle to
+%      H = TEST_APA_V5 returns the handle to a new TEST_APA_V5 or the handle to
 %      the existing singleton*.
 %
-%      TEST_APA_V4('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in TEST_APA_V4.M with the given input arguments.
+%      TEST_APA_V5('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in TEST_APA_V5.M with the given input arguments.
 %
-%      TEST_APA_V4('Property','Value',...) creates a new test_apa_v4 or raises the
+%      TEST_APA_V5('Property','Value',...) creates a new test_apa_v5 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before Test_APA_v4_OpeningFcn gets called.  An
+%      applied to the GUI before Test_APA_v5_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to Test_APA_v4_OpeningFcn via varargin.
+%      stop.  All inputs are passed to Test_APA_v5_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help Test_APA_v4
+% Edit the above text to modify the response to help Test_APA_v5
 
-% Last Modified by GUIDE v2.5 24-Nov-2014 12:23:56
+% Last Modified by GUIDE v2.5 19-Feb-2015 17:22:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @Test_APA_v4_OpeningFcn, ...
-    'gui_OutputFcn',  @Test_APA_v4_OutputFcn, ...
+    'gui_OpeningFcn', @Test_APA_v5_OpeningFcn, ...
+    'gui_OutputFcn',  @Test_APA_v5_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -42,9 +42,9 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-%% Test_APA_v4_OpeningFcn -Funcion principale
-% --- Executes just before Test_APA_v4 is made visible.
-function Test_APA_v4_OpeningFcn(hObject, ~, handles, varargin)
+%% Test_APA_v5_OpeningFcn -Funcion principale
+% --- Executes just before Test_APA_v5 is made visible.
+function Test_APA_v5_OpeningFcn(hObject, ~, handles, varargin)
 global haxes1 haxes2 haxes3 haxes4 haxes6 h_marks_T0 h_marks_HO h_marks_TO ...
     h_marks_FC1 h_marks_FO2 h_marks_FC2 Aff_corr
 % Funcion principale (Interface)
@@ -52,16 +52,16 @@ global haxes1 haxes2 haxes3 haxes4 haxes6 h_marks_T0 h_marks_HO h_marks_TO ...
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to Test_APA_v4 (see VARARGIN)
+% varargin   command line arguments to Test_APA_v5 (see VARARGIN)
 
-% Choose default command line output for Test_APA_v4
+% Choose default command line output for Test_APA_v5
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes Test_APA_v4 wait for user response (see UIRESUME)
-% uiwait(handles.Test_APA_v4);
+% UIWAIT makes Test_APA_v5 wait for user response (see UIRESUME)
+% uiwait(handles.Test_APA_v5);
 set(gcf,'Name','Calcul des APA v4');
 
 scrsz = get(0,'ScreenSize');
@@ -135,7 +135,7 @@ uimenu(e,'Label','Export evts -> c3d','Callback',@export_events);
 uimenu(e,'Label','Export format commun','Callback',@export_format_commun);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = Test_APA_v4_OutputFcn(~, ~, handles)
+function varargout = Test_APA_v5_OutputFcn(~, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -212,7 +212,7 @@ flag_afficheV = sum(flags_V); %Flag d'affichage
 
 % Extraction des maximas/minimas pour affichage des vitesses dans la bonne échelle
 Fech = APA.Trial(pos).CP_Position.Fech;
-T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech)+1;
+T0 = round(TrialParams.Trial(pos).EventsTime(2)*Fech);
 FC2 = round(TrialParams.Trial(pos).EventsTime(7)*Fech);
 if isnan(FC2)
     FC2 = size(APA.Trial(pos).GroundWrench.Time,2);
@@ -436,6 +436,9 @@ try
         set(findobj('tag','Group_APA'), 'Enable','On');
     end
     
+    set(findobj('Tag','EMG_button'),'Visible','On')
+    set(findobj('Tag','APA_button'),'Visible','On')
+    
 catch ERR_Charg
     warning(ERR_Charg.identifier,['Annulation chargement fichiers / ',ERR_Charg.message])
     waitfor(warndlg('Annulation chargement fichiers!'));
@@ -499,6 +502,8 @@ try
     set(findobj('tag','listbox1'), 'Value',1);
     liste_marche = arrayfun(@(i) APA.Trial(i).CP_Position.TrialName, 1:length(APA.Trial),'uni',0);
     set(findobj('tag','listbox1'),'String',liste_marche);
+    
+    
     
 catch ERR_Charg
     warning(ERR_Charg.identifier,['Annulation chargement fichiers / ',ERR_Charg.message])
@@ -598,6 +603,9 @@ try
         set(axess(i),'Visible','On');
         set(axess(i),'NextPlot','new');
     end
+    
+    set(findobj('Tag','EMG_button'),'Visible','On')
+    set(findobj('Tag','APA_button'),'Visible','On')
 catch ERR
     error(['Annulation chargement / ' ERR.message]);
 end
@@ -1296,7 +1304,7 @@ function Automatik_display_Callback(~, ~, ~)
 
 %% Test_APA_v4_ResizeFcn
 function Test_APA_v4_ResizeFcn(~, ~, ~)
-% hObject    handle to Test_APA_v4 (see GCBO)
+% hObject    handle to Test_APA_v5 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -1643,16 +1651,9 @@ global APA ResAPA TrialParams liste_marche acq_courante
 pos = matchcells(liste_marche,{acq_courante});
 
 %Supression de l'acquisition séléctionné
-if isfield(APA,'removedTrials')
-    APA.removedTrials = [APA.removedTrials,APA.Trial(pos)];
-    ResAPA.removedTrials = [ResAPA.removedTrials,ResAPA.Trial(pos)];
-    TrialParams.removedTrials = [TrialParams.removedTrials,TrialParams.Trial(pos)];
-else
-    APA.removedTrials = APA.Trial(pos);
-    ResAPA.removedTrials = ResAPA.Trial(pos);
-    TrialParams.removedTrials = TrialParams.Trial(pos);
-end
-
+APA.removedTrials = [APA.removedTrials,APA.Trial(pos)];
+ResAPA.removedTrials = [ResAPA.removedTrials,ResAPA.Trial(pos)];
+TrialParams.removedTrials = [TrialParams.removedTrials,TrialParams.Trial(pos)];
 num_Trial = arrayfun(@(i) APA.Trial(i).CP_Position.TrialNum,1:length(APA.Trial));
 num_remTrial = arrayfun(@(i) APA.removedTrials(i).CP_Position.TrialNum,1:length(APA.removedTrials));
 [~,ind_supp_tri] = sort(unique(num_remTrial));
@@ -2105,7 +2106,6 @@ for i = 1:nb_acq
         
         Trial_Res_APA = calcul_auto_APA_marker(Trial_APA, Trial_TrialParams,Trial_Res_APA);
         Trial_Res_APA = calculs_parametres_initiationPas_v4(Trial_APA, Trial_TrialParams,Trial_Res_APA);
-        Trial_TrialParams.StartingFoot = Trial_Res_APA.Cote;
         
         cpt = cpt+1;
         APA.Trial(cpt) = Trial_APA;
@@ -2166,4 +2166,39 @@ TrialParams = TrialParams_N;
 listbox1_Callback(handles.listbox1, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of normalized_time
+
+
+
+% --- Executes on button press in APA_button.
+function APA_button_Callback(hObject, eventdata, handles)
+% hObject    handle to APA_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(findobj('Tag','EMG_button'),'Value',0)
+set(findobj('Tag','APA_button'),'Value',1)
+set(findobj('Tag','Calc_current'),'Enable','On')
+set(findobj('Tag','Calc_batch'),'Enable','On')
+set(findobj('Tag','Clean_data'),'Enable','On')
+set(findobj('Tag','time_normalize'),'Enable','On')
+set(findobj('Tag','real_time'),'Enable','On')
+set(findobj('Tag','normalized_time'),'Enable','On')
+set(findobj('Tag','Group_APA'),'Enable','On')
+% Hint: get(hObject,'Value') returns toggle state of APA_button
+
+
+% --- Executes on button press in EMG_button.
+function EMG_button_Callback(hObject, eventdata, handles)
+% hObject    handle to EMG_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(findobj('Tag','APA_button'),'Value',0)
+set(findobj('Tag','Calc_current'),'Enable','Off')
+set(findobj('Tag','Calc_batch'),'Enable','Off')
+set(findobj('Tag','Clean_data'),'Enable','Off')
+set(findobj('Tag','time_normalize'),'Enable','Off')
+set(findobj('Tag','real_time'),'Enable','Off')
+set(findobj('Tag','normalized_time'),'Enable','Off')
+set(findobj('Tag','Group_APA'),'Enable','Off')
+set(findobj('Tag','EMG_button'),'Value',1)
+% Hint: get(hObject,'Value') returns toggle state of EMG_button
 
