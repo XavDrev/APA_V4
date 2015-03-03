@@ -1740,12 +1740,12 @@ for i_acq = 1 : length(liste_acq)
         btkClearEvents(acq)
         btkAppendEvent(acq,'Event',TrialParams.Trial(i_acq).EventsTime(2),'General');
         btkAppendEvent(acq,'Event',TrialParams.Trial(i_acq).EventsTime(3),'General');
-        if ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Gauche'))
+        if ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Left'))
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(4),'Left');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(5),'Left');
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(6),'Right');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(7),'Right');
-        elseif ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Droit'))
+        elseif ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Right'))
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(4),'Right');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(5),'Right');
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(6),'Left');
