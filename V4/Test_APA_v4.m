@@ -22,7 +22,7 @@ function varargout = Test_APA_v4(varargin)
 
 % Edit the above text to modify the response to help Test_APA_v4
 
-% Last Modified by GUIDE v2.5 24-Nov-2014 12:23:56
+% Last Modified by GUIDE v2.5 09-Apr-2015 17:28:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -180,7 +180,7 @@ end
 
 t = APA.Trial(pos).CP_Position.Time;
 Fin = length(t);
-TFin = floor(2*t(end))/2+0.5;
+TFin = floor(2*max(t))/2+0.5;
 
 % Affichage des courbes déplacements (CP) et Puissance/Acc
 plot(haxes1,t,APA.Trial(pos).CP_Position.Data(1,1:Fin)); axis(haxes1,'tight');
@@ -196,6 +196,7 @@ if ~flagPF
         plot(haxes6,t,APA.Trial(pos).CG_Power.Data(1:Fin)); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
         xlim([0 TFin])
+    catch
     end
 else
     try
@@ -204,6 +205,7 @@ else
         ylabel(haxes6,'Axe Médio-Latéral (mm)','FontName','Times New Roman','FontSize',10);
         plot(haxes6,APA.Trial(pos).CP_Position.Data(2,:),APA.Trial(pos).CP_Position.Data(1,:)); %axis tight
         set(haxes6,'YDir','reverse');
+    catch
     end
 end
 %Affichage des vitesses en fonction des choix de l'utilisateur et présence de données dérivées
@@ -339,6 +341,7 @@ set(findobj('tag','Acc_txt'),'Visible','On');
 set(findobj('tag','Group_APA'),'Visible','On');
 set(findobj('tag','time_normalize'), 'Visible','On');
 set(findobj('tag','real_time'), 'Visible','On');
+set(findobj('tag','InfosButton'), 'Visible','On');
 
 set(findobj('tag','normalized_time'), 'Visible','On');
 set(findobj('tag','Calc_current'),'Visible','On');
@@ -391,14 +394,14 @@ global dossier_c3d APA TrialParams ResAPA APA_T TrialParams_T Subject_data liste
 
 try
     %Choix manuel des fichiers
-    [files dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
+    [files, dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
     
     %Initialisation
     Subject_data = {};
     
     %Extraction des données d'intérêts
     button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
-    [APA_T TrialParams_T ResAPA] = Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
+    [APA_T, TrialParams_T, ResAPA] = Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
     APA = APA_T;
     TrialParams = TrialParams_T;
     
@@ -432,6 +435,8 @@ try
     
     set(findobj('tag','time_normalize'), 'Enable','On');
     set(findobj('tag','real_time'), 'Enable','On');
+    set(findobj('tag','Calc_batch'), 'Enable','On');
+    set(findobj('tag','Clean_data'), 'Enable','On');
     if length(files)>1
         set(findobj('tag','Group_APA'), 'Enable','On');
     end
@@ -450,12 +455,11 @@ global dossier_c3d APA TrialParams ResAPA liste_marche
 
 try
     %Choix manuel des fichiers
-    [files dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
-    
-    
+    [files, dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
+        
     %Extraction des données d'intérêts
     button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
-    [APA_add TrialParams_add ResAPA_add]= Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
+    [APA_add, TrialParams_add, ResAPA_add]= Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
     
     % On modifie le nom des acquisitions/fields similaires
     liste_new = arrayfun(@(i) APA_add.Trial(i).CP_Position.TrialName, 1:length(APA_add.Trial),'uni',0);
@@ -551,14 +555,19 @@ try
     ResAPA = {};
     TrialParams = {};
     
-    [var dossier] = uigetfile('*_APA.mat','Choix du fichier APA à charger');
+    [var, dossier] = uigetfile('*_APA.mat','Choix du fichier APA à charger');
     if ischar(var)
-        eval(['load ' fullfile(dossier,var)]);
-        eval(['APA = ' var(1:end-4) ';']);
-        eval(['load ' strrep(fullfile(dossier,var),'APA','ResAPA')]);
-        eval(['ResAPA = ' strrep(var(1:end-4),'APA','ResAPA') ';']);
-        eval(['load ' strrep(fullfile(dossier,var),'APA','TrialParams')]);
-        eval(['TrialParams = ' strrep(var(1:end-4),'APA','TrialParams') ';'])  ;
+        eval(['APA0 = load (''' fullfile(dossier,var) ''');']);
+        nom_APA = fieldnames(APA0);
+        eval(['APA = APA0.' nom_APA{1} ';']);
+        
+        eval(['ResAPA0 = load (''' strrep(fullfile(dossier,var),'APA','ResAPA') ''');']);
+        nom_ResAPA = fieldnames(ResAPA0);
+        eval(['ResAPA = ResAPA0.'  nom_ResAPA{1} ';']);
+        
+        eval(['TrialParams0 = load (''' strrep(fullfile(dossier,var),'APA','TrialParams') ''');']);
+        nom_TrialParams0 = fieldnames(TrialParams0);
+        eval(['TrialParams = TrialParams0.' nom_TrialParams0{1} ';'])  ;
     end
     APA_T = APA;
     TrialParams_T = TrialParams;
@@ -649,7 +658,7 @@ end
 %% T0_Callback - Choix T0 (1er évt Biomécanique)
 function T0_Callback(~, eventdata, handles)
 % Choix T0 (1er évt Biomécanique)
-global haxes1 haxes2 haxes3 haxes4 APA TrialParams liste_marche acq_courante h_marks_T0
+global haxes1 haxes2 haxes3 haxes4 APA TrialParams TrialParams_N TrialParams_T liste_marche acq_courante h_marks_T0
 % hObject    handle to T0 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -679,11 +688,18 @@ set(ch(end),'XData',APA.Trial(pos).CG_Speed.Time);
 set(ch(end),'YData',APA.Trial(pos).CG_Speed.Data(1,:));
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
+    
+
 
 %% HO_Callback - Choix HO (Heel-Off)
 function HO_Callback(~, eventdata, handles)
 % Choix HO (Heel-Off)
-global TrialParams liste_marche acq_courante h_marks_HO
+global TrialParams liste_marche acq_courante h_marks_HO TrialParams_T TrialParams_N
 % hObject    handle to HO (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -696,11 +712,16 @@ efface_marqueur_test(h_marks_HO);
 h_marks_HO=affiche_marqueurs(Manual_click(1),'-k');
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
 
 %% TO_Callback - Choix TO (Toe-Off)
 function TO_Callback(~, eventdata, handles)
 % Choix TO (Toe-Off)
-global TrialParams liste_marche acq_courante h_marks_TO h_marks_Vy_FO1
+global TrialParams liste_marche acq_courante h_marks_TO h_marks_Vy_FO1 TrialParams_T TrialParams_N
 % hObject    handle to TO (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 
@@ -715,11 +736,16 @@ efface_marqueur_test(h_marks_Vy_FO1);
 h_marks_TO=affiche_marqueurs(Manual_click(1),'-b');
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
 
 %% Choix FC1 - FC1_Callback
 function FC1_Callback(~, eventdata, handles)
 % Choix FC1 (Foot-Contact du pied oscillant)
-global haxes4 APA TrialParams liste_marche acq_courante h_marks_FC1 h_marks_V2
+global haxes4 APA TrialParams liste_marche acq_courante h_marks_FC1 h_marks_V2 TrialParams_T TrialParams_N
 % hObject    handle to FC1 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -747,11 +773,16 @@ end
 h_marks_V2 = plot(haxes4,APA.Trial(pos).CG_Speed.Time(ind),V2,'x','Markersize',11);
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
 
 %% FO2_Callback - Choix FO2
 function FO2_Callback(~, eventdata, handles)
 % Choix FO2 (Foot-Off du pied d'appui)
-global TrialParams liste_marche acq_courante h_marks_FO2
+global TrialParams liste_marche acq_courante h_marks_FO2 TrialParams_T TrialParams_N
 % hObject    handle to FO2 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -766,11 +797,16 @@ h_marks_FO2=affiche_marqueurs(Manual_click(1),'-g');
 
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
 
 %% FC2_Callback -  Choix FC2
 function FC2_Callback(~, eventdata, handles)
 % Choix FC2 (Foot-Contact du pied d'appui)
-global TrialParams liste_marche acq_courante h_marks_FC2
+global TrialParams liste_marche acq_courante h_marks_FC2 TrialParams_T TrialParams_N
 % hObject    handle to FC2 (see GCBO)
 pos = matchcells(liste_marche,{acq_courante});
 if ~ismac
@@ -785,6 +821,11 @@ h_marks_FC2=affiche_marqueurs(Manual_click(1),'-c');
 
 Calc_current_Callback(findobj('tag','Calc_current'), eventdata, handles);
 APA_Vitesses_Callback;
+if get(findobj('tag','real_time'),'Value')
+    TrialParams_T = TrialParams;
+elseif get(findobj('tag','normalized_time'),'Value')
+    TrialParams_N = TrialParams;
+end
 
 %% yAPA_AP_Callback - Detection manuelle du déplacement postérieur max du CP lors des APA
 function yAPA_AP_Callback(~, eventdata, handles)
@@ -1135,6 +1176,7 @@ for i=1:length(param)
         elseif isnumeric(Acq.(param{i}))
             CR{i,2} = Acq.(param{i})(1);
         end
+    catch
     end
 end
 set(findobj('tag','Results'),'Data',CR);
@@ -1301,7 +1343,7 @@ function Test_APA_v4_ResizeFcn(~, ~, ~)
 % handles    structure with handles and user data (see GUIDATA)
 
 %% Normalisation temporelle des données
-function normalise_time(hObject, eventdata, handles)
+function normalise_time(~, eventdata, handles)
 
 global APA TrialParams APA_T TrialParams_T APA_N TrialParams_N
 
@@ -1420,22 +1462,21 @@ end
 
 %% Affich_corridor_Callback - Affichage des corridors pour les données brutes
 % --- Executes on button press in Affich_corridor.
-function [corr1 corr2 corr3 corr4 handle_corr1 handle_corr2 handle_corr3 handle_corr4 ] = Affich_corridor_Callback(corr1);
+function [corr1, corr2, corr3, corr4, handle_corr1, handle_corr2, handle_corr3, handle_corr4 ] = Affich_corridor_Callback(corr1)
 % Affichage des corridors pour les données brutes
 global haxes1 haxes2 haxes3 haxes4 Aff_corr ...
     APA_Corr TrialParams_Corr h_marks_T0_C h_marks_HO_C h_marks_TO_C h_marks_FC1_C h_marks_FO2_C h_marks_FC2_C
 % hObject    handle to Affich_corridor (see GCBO)
 
 try
-    if ~isempty(APA_Corr)
+    if ~isempty(APA_Corr) && isempty(findobj('tag','Corr1_L'))
         
-        % Affichage des courbes déplacements (CP) et Puissance/Acc
         set(gcf,'CurrentAxes',haxes1)
         set(gca,'NextPlot','replace')
-        if Aff_corr
+        if Aff_corr == 1
             set(gca,'NextPlot','add')
         end
-        corr1 = plot(haxes1,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(1,:),'Linewidth',2); axis(haxes1,'tight');
+        corr1 = plot(haxes1,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(1,:),'Linewidth',2,'Color',[0 0 1],'Tag','Corr1_L'); axis(haxes1,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
         T=[APA_Corr.Trial(3).CP_Position.Data(1,:)';APA_Corr.Trial(2).CP_Position.Data(1,:)'];
@@ -1446,14 +1487,15 @@ try
             'faces',P,...
             'facecolor',[0 0 1],...
             'edgecolor','none',...
-            'FaceAlpha',0.3);
+            'FaceAlpha',0.3,...
+            'Tag','Corr1_P');
         
         set(gcf,'CurrentAxes',haxes2)
         set(gca,'NextPlot','replace')
-        if Aff_corr
+        if Aff_corr == 1
             set(gca,'NextPlot','add')
         end
-        corr2 = plot(haxes2,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(2,:),'Linewidth',2); axis(haxes2,'tight');
+        corr2 = plot(haxes2,APA_Corr.Trial(1).CP_Position.Time,APA_Corr.Trial(1).CP_Position.Data(2,:),'Linewidth',2,'Color',[0 0 1],'Tag','Corr2_L'); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CP_Position.Time;
         N=[t';t'];
         T=[APA_Corr.Trial(3).CP_Position.Data(2,:)';APA_Corr.Trial(2).CP_Position.Data(2,:)'];
@@ -1464,14 +1506,15 @@ try
             'faces',P,...
             'facecolor',[0 0 1],...
             'edgecolor','none',...
-            'FaceAlpha',0.3);
+            'FaceAlpha',0.3,...
+            'Tag','Corr2_P');
         
         set(gcf,'CurrentAxes',haxes3)
         set(gca,'NextPlot','replace')
-        if Aff_corr
+        if Aff_corr == 1
             set(gca,'NextPlot','add')
         end
-        corr3 = plot(haxes3,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(1,:),'Linewidth',2); axis(haxes2,'tight');
+        corr3 = plot(haxes3,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(1,:),'Linewidth',2,'Color',[0 0 1],'Tag','Corr3_L'); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
         T=[APA_Corr.Trial(3).CG_Speed.Data(1,:)';APA_Corr.Trial(2).CG_Speed.Data(1,:)'];
@@ -1482,14 +1525,15 @@ try
             'faces',P,...
             'facecolor',[0 0 1],...
             'edgecolor','none',...
-            'FaceAlpha',0.3);
+            'FaceAlpha',0.3,...
+            'Tag','Corr3_P');
         
         set(gcf,'CurrentAxes',haxes4)
         set(gca,'NextPlot','replace')
-        if Aff_corr
+        if Aff_corr == 1
             set(gca,'NextPlot','add')
         end
-        corr4 = plot(haxes4,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(3,:),'Linewidth',2); axis(haxes2,'tight');
+        corr4 = plot(haxes4,APA_Corr.Trial(1).CG_Speed.Time,APA_Corr.Trial(1).CG_Speed.Data(3,:),'Linewidth',2,'Color',[0 0 1],'Tag','Corr4_L'); axis(haxes2,'tight');
         t = APA_Corr.Trial(1).CG_Speed.Time;
         N=[t';t'];
         T=[APA_Corr.Trial(3).CG_Speed.Data(3,:)';APA_Corr.Trial(2).CG_Speed.Data(3,:)'];
@@ -1500,7 +1544,8 @@ try
             'faces',P,...
             'facecolor',[0 0 1],...
             'edgecolor','none',...
-            'FaceAlpha',0.3);
+            'FaceAlpha',0.3,...
+            'Tag','Corr4_P');
         
         %Actualisation des marqueurs
         h_marks_T0_C = affiche_marqueurs(TrialParams_Corr.Trial(1).EventsTime(2),'--r');
@@ -1515,124 +1560,34 @@ try
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         Aff_corr = 1;
+
+    else
+        if Aff_corr == 1;
+            Aff_corr = 0;
+            set(findobj('tag','Corr1_L'),'Visible','off');
+            set(findobj('tag','Corr1_P'),'Visible','off');
+            set(findobj('tag','Corr2_L'),'Visible','off');
+            set(findobj('tag','Corr2_P'),'Visible','off');
+            set(findobj('tag','Corr3_L'),'Visible','off');
+            set(findobj('tag','Corr3_P'),'Visible','off');
+            set(findobj('tag','Corr4_L'),'Visible','off');
+            set(findobj('tag','Corr4_P'),'Visible','off');
+        elseif Aff_corr == 0;
+            Aff_corr = 1;
+            set(findobj('tag','Corr1_L'),'Visible','on');
+            set(findobj('tag','Corr1_P'),'Visible','on');
+            set(findobj('tag','Corr2_L'),'Visible','on');
+            set(findobj('tag','Corr2_P'),'Visible','on');
+            set(findobj('tag','Corr3_L'),'Visible','on');
+            set(findobj('tag','Corr3_P'),'Visible','on');
+            set(findobj('tag','Corr4_L'),'Visible','on');
+            set(findobj('tag','Corr4_P'),'Visible','on');
+        end
+        
     end
 catch ERR
     waitfor(warndlg('!!!Pas de corridors calculés/sélectionnés!!!'));
     warning(ERR.identifier,ERR.message)
-end
-
-%% list_Callback - Affichage courbes avec corridors
-% --- Execute when pressing corridor interface list
-function list_Callback(~,~,~)
-% Affichage courbes avec corridors
-global axes1 axes2 axes3 axes4 Sujet_tmp list listes_corr i t T_FC1_base
-
-%Récupération de l'acquisition séléctionnée et affichage
-try
-    contents = cellstr(get(list,'String'));
-    acq_choisie = contents{get(list,'Value')};
-    t_0 = Sujet_tmp.(acq_choisie).t(1);
-    T0 = round((Sujet_tmp.(acq_choisie).tMarkers.T0-t_0)*Sujet_tmp.(acq_choisie).Fech);
-    
-    dimm = length(t);
-    
-    %Recalage sur le Foot-Contact (ne marche pas)
-    FC1 = round((Sujet_tmp.(acq_choisie).tMarkers.FC1-t_0)*Sujet_tmp.(acq_choisie).Fech) - T0;
-    FC1_corr = round(T_FC1_base*Sujet_tmp.(listes_corr{i(1)}).Fech);
-    decalage_V = abs(FC1 - FC1_corr);
-    V_CG_Z = Sujet_tmp.(acq_choisie).V_CG_Z;
-    %     V_CG_Z_d = Sujet_tmp.(acq_choisie).V_CG_Z_d;
-    diff = dimm - length(V_CG_Z(T0+decalage_V:end));
-    
-    
-    if diff<0
-        try
-            V_CG_Z = V_CG_Z(T0+decalage_V:end+diff);
-        catch Errt
-            V_CG_Z = [Nan*ones(abs(T0+decalage_V),1) V_CG_Z(1:end+diff)];
-        end
-    else
-        try
-            V_CG_Z = [V_CG_Z(T0+decalage_V:end);NaN*ones(diff,1)];
-        catch Errrt
-            V_CG_Z = [Nan*ones(abs(T0+decalage_V),1) V_CG_Z(1:end) NaN*ones(diff,1)];
-        end
-    end
-    
-    txt = acq_choisie;
-    txt(regexp(acq_choisie,'_')) = ' ';
-    
-    Offset_CPAP = Sujet_tmp.(acq_choisie).CP_AP(1)*1e-1;%-Sujet_tmp.(listes_corr{i(1)}).CP_AP(1);
-    try
-        hh1 = plot(axes1,t,Sujet_tmp.(acq_choisie).CP_AP*1e-1-Offset_CPAP,'r','Linewidth',1.5);
-    catch Err_CPAP
-        tt = Sujet_tmp.(acq_choisie).t;
-        hh1 = plot(axes1,tt,Sujet_tmp.(acq_choisie).CP_AP*1e-1-Offset_CPAP,'r','Linewidth',1.5);
-    end
-    
-    set(hh1,'Displayname',txt);
-    affiche_label(hh1,txt,axes1);    axis(axes1,'tight');
-    
-    Offset_CPML = Sujet_tmp.(acq_choisie).CP_ML(1)*1e-1;%-Sujet_tmp.(listes_corr{i(1)}).CP_ML(1);
-    try
-        hh2 = plot(axes2,t,Sujet_tmp.(acq_choisie).CP_ML*1e-1-Offset_CPML,'r','Linewidth',1.5);
-    catch Err_CPML
-        tt = Sujet_tmp.(acq_choisie).t;
-        hh2 = plot(axes2,tt,Sujet_tmp.(acq_choisie).CP_ML*1e-1-Offset_CPML,'r','Linewidth',1.5);
-    end
-    
-    set(axes2,'Visible','On');
-    affiche_label(hh2,txt,axes2);    axis(axes2,'tight');
-    
-    try
-        hh3 = plot(axes3,t,Sujet_tmp.(acq_choisie).V_CG_AP,'r','Linewidth',1.5);
-    catch Err_V_CG
-        tt = Sujet_tmp.(acq_choisie).t;
-        hh3 = plot(axes3,tt,Sujet_tmp.(acq_choisie).V_CG_AP,'r','Linewidth',1.5);
-    end
-    
-    affiche_label(hh3,txt,axes3);    axis(axes3,'tight');
-    
-    %      hh4 = plot(,tt,V_CG_Z,'r','Linewidth',1.5);
-    
-    try
-        hh4 = plot(axes4,t,Sujet_tmp.(acq_choisie).V_CG_Z,'r','Linewidth',1.5);
-    catch Err_V_CG
-        tt = Sujet_tmp.(acq_choisie).t;
-        hh3 = plot(axes4,tt,Sujet_tmp.(acq_choisie).V_CG_Z,'r','Linewidth',1.5);
-    end
-    affiche_label(hh4,txt,axes4);    axis(axes4,'tight');
-    
-catch ERR
-    waitfor(warndlg('Fermer et recharger la fenêtre de visu des corrdidors!','Redraw corridors'));
-end
-
-%% subject_info -Enregistrement des données sujet
-% --- Execute when choosing to set subject data
-function Data = subject_info(~,~,~)
-% Enregistrement des données sujet
-global Subject_data
-
-prompt = {'ID','Nom','Sexe',...
-    'Age (ans)','Pathologie'};
-
-if ~isempty(Subject_data)
-    def = {num2str(Subject_data.ID),Subject_data.Name,Subject_data.Sexe,num2str(Subject_data.Age),Subject_data.Patho};
-else
-    def = {'ID','Nom','M','25','Sain'};
-end
-
-try
-    rep = inputdlg(prompt,'Données Sujet',1,def);
-    Data.ID = rep{1};
-    Data.Name = rep{2};
-    Data.Sexe = rep{3};
-    Data.Age = str2double(rep{4});
-    Data.Patho = rep{5};
-    
-    Subject_data = Data;
-catch ERR
-    warning(ERR.identifier, ['Erreur acquisition données sujet / ' ERR.message]);
 end
 
 %% Delete_current_Callback
@@ -1693,7 +1648,7 @@ else
     try
         plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
-    catch Err_Power
+    catch 
     end
 end
 
@@ -1740,12 +1695,12 @@ for i_acq = 1 : length(liste_acq)
         btkClearEvents(acq)
         btkAppendEvent(acq,'Event',TrialParams.Trial(i_acq).EventsTime(2),'General');
         btkAppendEvent(acq,'Event',TrialParams.Trial(i_acq).EventsTime(3),'General');
-        if ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Gauche'))
+        if ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Left'))
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(4),'Left');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(5),'Left');
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(6),'Right');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(7),'Right');
-        elseif ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Droit'))
+        elseif ~isempty(strfind(ResAPA.Trial(i_acq).Cote,'Right'))
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(4),'Right');
             btkAppendEvent(acq,'Foot Strike',TrialParams.Trial(i_acq).EventsTime(5),'Right');
             btkAppendEvent(acq,'Foot Off',TrialParams.Trial(i_acq).EventsTime(6),'Left');
@@ -1772,7 +1727,7 @@ APA_Vitesses_Callback;
 % Hint: get(hObject,'Value') returns toggle state of APA_auto
 
 %% data_preprocessing
-function [APA TrialParams ResAPA] = Data_Preprocessing(files,dossier,b_c)
+function [APA, TrialParams, ResAPA] = Data_Preprocessing(files,dossier,b_c)
 % Effectue le pré-traitement et stockage des données receuillies du répertoire d'étude (dossier)
 
 if nargin<2
@@ -1796,6 +1751,7 @@ else
     nb_acq =1;
 end
 % initialisation
+try
 myFile = files{1}(1:end-4);
 ind_tag = find(myFile=='_');
 myProt = myFile(1:ind_tag(1) - 1);
@@ -1806,6 +1762,13 @@ if size(ind_tag,2) > 4
     mySpeed = myFile(ind_tag(4) + 1 : ind_tag(5) - 1);
 else
     mySpeed = myFile(ind_tag(4) + 1 : end - 4);
+end
+catch
+    myProt = 'Protocol';
+    mySession = 'Session';
+    mySubject = 'Subject';
+    myTreat = 'Treatment';
+    mySpeed = 'Speed';
 end
 
 nom_fich = upper([myProt '_' mySession '_' mySubject '_' myTreat '_' mySpeed]);
@@ -1936,37 +1899,19 @@ for i = 1:nb_acq
         end
         
         try
-            % Détection T0 + extraction des evts du pas notés sur Nexus (VICON)
+            % extraction des evts du pas notés sur Nexus (VICON)
             evts = sort(DATA.events.temps - t(1));
-            ind_1 = round((evts(1)-t(1))*Freq_ana); %1er evenment noté manuellement sur le VICON (Heel-Off)
-            if ind_1>10 % Cas ou l'acqisition commence tardivement avec l'initiation du pas
-                Trial_TrialParams.EventsTime(2) = calcul_APA_T0_v4(CP_filt(1:ind_1,:),t(1:ind_1)) + t(1); % 1er evt biomécanique
-            else
-                Trial_TrialParams.EventsTime(2) = NaN;
-            end
-            
-            if length(evts)<5
-                disp('...Evènements de l''Initiation du pas non identifiée... ');
-                disp('...Détection automatique ...');
-                evts = calcul_APA_all(CP_filt,t) - t(1);
-                Trial_TrialParams.EventsTime(2) = evts(1) + t(1); % 1er evt biomécanique
-                evts(1) = evts(2)-0.01; % ON crée le Heel-Off
-            end
+            Trial_TrialParams.EventsTime(2:7) = evts(1:6) + t(1);
+           
         catch ERR % Détection automatique
             warning(ERR.identifier,ERR.message)
             disp(['Pas d''évènements du pas ' myFile]);
             disp('...Détection automatique des évènements');
             evts = calcul_APA_all(CP_filt,t) - t(1);
-            Trial_TrialParams.EventsTime(2) = evts(1) + t(1); % 1er evt biomécanique
-            evts(1) = evts(2)-0.01; % ON crée le Heel-Off
+            Trial_TrialParams.EventsTime(2:7) = [evts(1) + t(1), evts(2)-0.01, evts(2:5)]; % 1er evt biomécanique
             disp('...Terminé!');
         end
         
-        if ~isempty(evts)
-            Trial_TrialParams.EventsTime(3:7) = evts(1:5) + t(1);
-        else
-            Trial_TrialParams.EventsTime(3:7) = NaN;
-        end
         
         %======================================================================
         % Calcul des vitesses du CG
@@ -2063,7 +2008,7 @@ for i = 1:nb_acq
                 % Interpolation du vecteur dérivé (sur-échantillonnage à Fech)
                 if Fech_vid<Freq_ana
                     try
-                        VCoM = interp1(t_vid,VCoM,t_PF);
+%                         VCoM = interp1(t_vid,VCoM,t_PF);
                         V_CG = interp1(t_vid,V_CG,t_PF);
                     catch ERR
                         warning(ERR.identifier,ERR.message)
@@ -2166,4 +2111,60 @@ TrialParams = TrialParams_N;
 listbox1_Callback(handles.listbox1, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of normalized_time
+
+
+
+% --- Executes on button press in InfosButton.
+function InfosButton_Callback(hObject, eventdata, handles)
+% hObject    handle to InfosButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global APA ResAPA  TrialParams
+
+Tag_items = {'Protocole','Session','Code_Sujet','Traitement','Vitesse'};
+items = {APA.Infos.Protocole,APA.Infos.Session,APA.Infos.Subject,APA.Infos.MedCondition,APA.Infos.SpeedCondition};
+items = inputdlg(Tag_items,'Infos',1,items);
+
+nom_fich = upper([items{1} '_' items{2} '_' items{3} '_' items{4} '_' items{5}]);
+APA.Infos.Protocole = items{1};
+APA.Infos.Session = items{2};
+APA.Infos.Subject = items{3};
+APA.Infos.MedCondition = items{4};
+APA.Infos.SpeedCondition = items{5};
+APA.Infos.FileName = nom_fich;
+
+ResAPA.Infos = APA.Infos;
+TrialParams.Infos = APA.Infos;
+
+    
+    %% subject_info -Enregistrement des données sujet
+% --- Execute when choosing to set subject data
+function Data = subject_info(~,~,~)
+% Enregistrement des données sujet
+global Subject_data
+
+prompt = {'ID','Nom','Sexe',...
+    'Age (ans)','Pathologie'};
+
+if ~isempty(Subject_data)
+    def = {num2str(Subject_data.ID),Subject_data.Name,Subject_data.Sexe,num2str(Subject_data.Age),Subject_data.Patho};
+else
+    def = {'ID','Nom','M','25','Sain'};
+end
+
+try
+    rep = inputdlg(prompt,'Données Sujet',1,def);
+    Data.ID = rep{1};
+    Data.Name = rep{2};
+    Data.Sexe = rep{3};
+    Data.Age = str2double(rep{4});
+    Data.Patho = rep{5};
+    
+    Subject_data = Data;
+catch ERR
+    warning(ERR.identifier, ['Erreur acquisition données sujet / ' ERR.message]);
+end
+
+
+
 
