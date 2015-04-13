@@ -223,7 +223,12 @@ Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
 Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,T0:FC2))*1.25;
 Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
 Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,T0:FC2))*1.25;
-
+if any([isempty(Min_AP),isempty(Max_AP),isempty(Min_Z),isempty(Max_Z)])
+    Min_AP=min(APA.Trial(pos).CG_Speed.Data(1,:))*1.25;
+    Max_AP=max(APA.Trial(pos).CG_Speed.Data(1,:))*1.25;
+    Min_Z=min(APA.Trial(pos).CG_Speed.Data(3,:))*1.25;
+    Max_Z=max(APA.Trial(pos).CG_Speed.Data(3,:))*1.25;
+end
 
 switch flag_afficheV
     case 0 %Aucune sélection
@@ -561,11 +566,11 @@ try
         nom_APA = fieldnames(APA0);
         eval(['APA = APA0.' nom_APA{1} ';']);
         
-        eval(['ResAPA0 = load (''' strrep(fullfile(dossier,var),'APA','ResAPA') ''');']);
+        eval(['ResAPA0 = load (''' fullfile(dossier,strrep(var,'APA','ResAPA')) ''');']);
         nom_ResAPA = fieldnames(ResAPA0);
         eval(['ResAPA = ResAPA0.'  nom_ResAPA{1} ';']);
         
-        eval(['TrialParams0 = load (''' strrep(fullfile(dossier,var),'APA','TrialParams') ''');']);
+        eval(['TrialParams0 = load (''' fullfile(dossier,strrep(var,'APA','TrialParams')) ''');']);
         nom_TrialParams0 = fieldnames(TrialParams0);
         eval(['TrialParams = TrialParams0.' nom_TrialParams0{1} ';'])  ;
     end
@@ -618,32 +623,33 @@ function uipushtool3_ClickedCallback(~, ~, ~)
 global APA TrialParams ResAPA
 
 [nom_fich,chemin] = uiputfile('*.mat','Nom Du fichier à sauvegarder',[APA.Infos.FileName '_APA']);
-
-eval([APA.Infos.FileName '_APA = APA;'])
-eval(['save(fullfile(chemin,nom_fich),''' APA.Infos.FileName '_APA'',''-mat'');'])
-eval([APA.Infos.FileName '_ResAPA = ResAPA;'])
-eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''ResAPA'')),''' ResAPA.Infos.FileName '_ResAPA'',''-mat'');'])
-eval([APA.Infos.FileName '_TrialParams = TrialParams;'])
-eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''TrialParams'')),''' TrialParams.Infos.FileName '_TrialParams'',''-mat'');'])
-
-% Export Excel
-button = questdlg('Exporter sur Excel??','Sauvegarde résultats','Oui','Non','Non');
-if strcmp(button,'Oui')
-    fichier = strrep(nom_fich,'APA.mat','ResAPA.xlsx');
-    champs = fieldnames(ResAPA.Trial(1));
-    Tab.tag(1,:) = [champs(end-2:end-1);champs(1:end-3)]';
-    for i = 1 : length(ResAPA.Trial)
-        Tab.tag(i+1,1) = {ResAPA.Trial(i).TrialName};
-        Tab.tag(i+1,2) = num2cell(ResAPA.Trial(i).TrialNum);
-        Tab.tag(i+1,3) = {ResAPA.Trial(i).Cote};
-        for j = 2 : length(champs)-3
-            Tab.data(i,j-1) = ResAPA.Trial(i).(champs{j})(1);
+if any(nom_fich ~= 0)
+    eval([APA.Infos.FileName '_APA = APA;'])
+    eval(['save(fullfile(chemin,nom_fich),''' APA.Infos.FileName '_APA'',''-mat'');'])
+    eval([APA.Infos.FileName '_ResAPA = ResAPA;'])
+    eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''ResAPA'')),''' ResAPA.Infos.FileName '_ResAPA'',''-mat'');'])
+    eval([APA.Infos.FileName '_TrialParams = TrialParams;'])
+    eval(['save(fullfile(chemin,strrep(nom_fich,''APA'',''TrialParams'')),''' TrialParams.Infos.FileName '_TrialParams'',''-mat'');'])
+    
+    % Export Excel
+    button = questdlg('Exporter sur Excel??','Sauvegarde résultats','Oui','Non','Non');
+    if strcmp(button,'Oui')
+        fichier = strrep(nom_fich,'APA.mat','ResAPA.xlsx');
+        champs = fieldnames(ResAPA.Trial(1));
+        Tab.tag(1,:) = [champs(end-2:end-1);champs(1:end-3)]';
+        for i = 1 : length(ResAPA.Trial)
+            Tab.tag(i+1,1) = {ResAPA.Trial(i).TrialName};
+            Tab.tag(i+1,2) = num2cell(ResAPA.Trial(i).TrialNum);
+            Tab.tag(i+1,3) = {ResAPA.Trial(i).Cote};
+            for j = 2 : length(champs)-3
+                Tab.data(i,j-1) = ResAPA.Trial(i).(champs{j})(1);
+            end
         end
+        xlswrite(fullfile(chemin,fichier),Tab.tag,1,'A1')
+        xlswrite(fullfile(chemin,fichier),Tab.data,1,'D2')
+    else
+        warndlg('Attention données non exportées!');
     end
-    xlswrite(fullfile(chemin,fichier),Tab.tag,1,'A1')
-    xlswrite(fullfile(chemin,fichier),Tab.data,1,'D2')
-else
-    warndlg('Attention données non exportées!');
 end
 
 %% AutoScale_Callback - Remise à l'échelle
