@@ -666,7 +666,7 @@ function T0_Callback(~, eventdata, handles)
 % Choix T0 (1er évt Biomécanique)
 global haxes1 haxes2 haxes3 haxes4 APA TrialParams TrialParams_N TrialParams_T liste_marche acq_courante h_marks_T0
 % hObject    handle to T0 (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 if ~ismac
     Manual_click = ginput(1);
 else
@@ -707,7 +707,7 @@ function HO_Callback(~, eventdata, handles)
 % Choix HO (Heel-Off)
 global TrialParams liste_marche acq_courante h_marks_HO TrialParams_T TrialParams_N
 % hObject    handle to HO (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 if ~ismac
     Manual_click = ginput(1);
 else
@@ -729,7 +729,7 @@ function TO_Callback(~, eventdata, handles)
 % Choix TO (Toe-Off)
 global TrialParams liste_marche acq_courante h_marks_TO h_marks_Vy_FO1 TrialParams_T TrialParams_N
 % hObject    handle to TO (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 
 if ~ismac
     Manual_click = ginput(1);
@@ -753,7 +753,7 @@ function FC1_Callback(~, eventdata, handles)
 % Choix FC1 (Foot-Contact du pied oscillant)
 global haxes4 APA TrialParams liste_marche acq_courante h_marks_FC1 h_marks_V2 TrialParams_T TrialParams_N
 % hObject    handle to FC1 (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 if ~ismac
     Manual_click = ginput(1);
 else
@@ -790,7 +790,7 @@ function FO2_Callback(~, eventdata, handles)
 % Choix FO2 (Foot-Off du pied d'appui)
 global TrialParams liste_marche acq_courante h_marks_FO2 TrialParams_T TrialParams_N
 % hObject    handle to FO2 (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 if ~ismac
     Manual_click = ginput(1);
 else
@@ -814,7 +814,7 @@ function FC2_Callback(~, eventdata, handles)
 % Choix FC2 (Foot-Contact du pied d'appui)
 global TrialParams liste_marche acq_courante h_marks_FC2 TrialParams_T TrialParams_N
 % hObject    handle to FC2 (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 if ~ismac
     Manual_click = ginput(1);
 else
@@ -838,7 +838,7 @@ function yAPA_AP_Callback(~, eventdata, handles)
 % Detection manuelle du déplacement postérieur max du CP lors des APA
 global  ResAPA APA TrialParams liste_marche acq_courante
 % hObject    handle to yAPA_AP (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
     Manual_click = ginput(1);
@@ -859,7 +859,7 @@ function yAPA_ML_Callback(~, eventdata, handles)
 global  ResAPA APA TrialParams liste_marche acq_courante
 % Detection valeur minimale/maximale du déplacement médiolatéral du CP lors des APA
 % hObject    handle to yAPA_ML (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
     Manual_click = ginput(1);
@@ -880,7 +880,7 @@ APA_Vitesses_Callback;
 function Vy_FO1_Callback(~, ~, ~)
 % Détection manuelle de la Vitesse AP du CG lors de FO1
 % global haxes3 Sujet acq_courante h_marks_Vy_FO1
-% pos = matchcells(liste_marche,{acq_courante});
+% pos = matchcells(liste_marche,{acq_courante},'exact');
 % set(findobj('tag','APA_auto'),'Value',0)
 % % hObject    handle to Vy_FO1 (see GCBO)
 % % Choix sur la courbe dérivée
@@ -909,7 +909,7 @@ function Vm_Callback(~, eventdata, handles)
 % Détection manuelle Vitesse max AP du CG
 % hObject    handle to Vm (see GCBO)
 global  ResAPA APA  liste_marche acq_courante
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
     Manual_click = ginput(1);
@@ -943,7 +943,7 @@ function Vmin_APA_Callback(~, eventdata, handles)
 % Détection manuelle Vitesse min verticale du CG lors des APA
 global  ResAPA APA  liste_marche acq_courante
 % hObject    handle to Vmin_APA (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
     Manual_click = ginput(1);
@@ -976,7 +976,7 @@ function V1_Callback(~, eventdata, handles)
 % Détection manuelle du 1er min de la Vitesse vertciale du CG lors de l'éxecution du pas
 global ResAPA APA  liste_marche acq_courante
 % hObject    handle to V1 (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 set(findobj('tag','APA_auto'),'Value',0)
 if ~ismac
     Manual_click = ginput(1);
@@ -1050,7 +1050,7 @@ efface_marqueur_test(h_trig_txt);
 efface_marqueur_test(h_marks_FOG);
 efface_marqueur_test(h_FOG_txt);
 
-ind_acq = matchcells(liste_marche,{acq_courante});
+ind_acq = matchcells(liste_marche,{acq_courante},'exact');
 
 %Actualisation des marqueurs
 h_marks_T0 = affiche_marqueurs(TrialParams.Trial(ind_acq).EventsTime(2),'-r');
@@ -1084,7 +1084,7 @@ function APA_Vitesses_Callback(~, ~, ~)
 global haxes1 haxes2 haxes3 haxes4 APA ResAPA liste_marche acq_courante h_marks_APAy1 h_marks_APAy2 h_marks_Vy_FO1 h_marks_Vm h_marks_VZ_min h_marks_V1 h_marks_V2
 % hObject    handle to Vitesses (see GCBO)
 
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 
 %Nettoyage des axes d'abord (??Laisser si Multiplot On??)
 efface_marqueur_test(h_marks_APAy1);
@@ -1156,7 +1156,7 @@ function Calc_current_Callback(~, ~, ~)
 % hObject    handle to Calc_current (see GCBO)
 global APA ResAPA TrialParams liste_marche acq_courante
 
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 
 if get(findobj('tag','APA_auto'),'Value')
     ResAPA.Trial(pos) = calcul_auto_APA_marker(APA.Trial(pos),TrialParams.Trial(pos),ResAPA.Trial(pos));
@@ -1216,7 +1216,7 @@ function V_der_Callback(hObject, ~, ~)
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_der (see GCBO)
 % Hint: get(hObject,'Value') returns toggle state of V_der
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 flags_V = [get(findobj('tag','V_intgr'),'Value') get(findobj('tag','V_der'),'Value') get(findobj('tag','V_der_Vic'),'Value')];
 flag_afficheV = sum(flags_V); %Flag d'affichage
 if get(hObject,'Value')
@@ -1238,7 +1238,7 @@ function V_der_VICON_Callback(hObject, ~, ~)
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_der (see GCBO)
 % Hint: get(hObject,'Value') returns toggle state of V_der
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 flags_V = [get(findobj('tag','V_intgr'),'Value') get(findobj('tag','V_der'),'Value') get(findobj('tag','V_der_Vic'),'Value')];
 flag_afficheV = sum(flags_V); %Flag d'affichage
 if get(hObject,'Value')
@@ -1260,7 +1260,7 @@ function V_intgr_Callback(hObject, ~, ~)
 global haxes3 haxes4 APA liste_marche acq_courante flag_afficheV
 % hObject    handle to V_intgr (see GCBO)
 % Hint: get(hObject,'Value') returns toggle state of V_intgr
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 flags_V = [get(findobj('tag','V_intgr'),'Value') get(findobj('tag','V_der'),'Value') get(findobj('tag','V_der_Vic'),'Value')];
 flag_afficheV = sum(flags_V); %Flag d'affichage
 if get(hObject,'Value')
@@ -1601,7 +1601,7 @@ end
 function Delete_current_Callback(~, ~, ~)
 global APA ResAPA TrialParams liste_marche acq_courante
 % hObject    handle to Delete_current (see GCBO)
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 
 %Supression de l'acquisition séléctionné
 if isfield(APA,'removedTrials')
@@ -1638,7 +1638,7 @@ global haxes6 APA liste_marche acq_courante
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of PlotPF
-pos = matchcells(liste_marche,{acq_courante});
+pos = matchcells(liste_marche,{acq_courante},'exact');
 
 flagPF=get(findobj('tag','PlotPF'),'Value');
 set(haxes6,'NextPlot','replace');
