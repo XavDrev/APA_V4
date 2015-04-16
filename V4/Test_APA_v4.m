@@ -461,7 +461,7 @@ global dossier_c3d APA TrialParams ResAPA liste_marche
 try
     %Choix manuel des fichiers
     [files, dossier_c3d] = uigetfile('*.c3d; *.xls','Choix du/des fichier(s) c3d ou notocord(xls)','Multiselect','on'); %%Ajouter plus tard les autres file types
-        
+    
     %Extraction des données d'intérêts
     button_cut = questdlg('Lire toute l''acquisition?','Durée acquisition','Oui','PF','PF');
     [APA_add, TrialParams_add, ResAPA_add]= Data_Preprocessing(files,dossier_c3d(1:end-1),button_cut);
@@ -642,7 +642,11 @@ if any(nom_fich ~= 0)
             Tab.tag(i+1,2) = num2cell(ResAPA.Trial(i).TrialNum);
             Tab.tag(i+1,3) = {ResAPA.Trial(i).Cote};
             for j = 2 : length(champs)-3
-                Tab.data(i,j-1) = ResAPA.Trial(i).(champs{j})(1);
+                try
+                    Tab.data(i,j-1) = ResAPA.Trial(i).(champs{j})(1);
+                catch
+                    Tab.data(i,j-1) = [];
+                end
             end
         end
         xlswrite(fullfile(chemin,fichier),Tab.tag,1,'A1')
@@ -699,7 +703,7 @@ if get(findobj('tag','real_time'),'Value')
 elseif get(findobj('tag','normalized_time'),'Value')
     TrialParams_N = TrialParams;
 end
-    
+
 
 
 %% HO_Callback - Choix HO (Heel-Off)
@@ -1566,7 +1570,7 @@ try
         set(haxes3,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         set(haxes4,'ButtonDownFcn',@(hObject, eventdata)Test_APA_v4('graph_zoom',hObject, eventdata,guidata(hObject)));
         Aff_corr = 1;
-
+        
     else
         if Aff_corr == 1;
             Aff_corr = 0;
@@ -1654,7 +1658,7 @@ else
     try
         plot(haxes6,APA.Trial(pos).CG_Power.Time,APA.Trial(pos).CG_Power.Data); afficheY_v2(0,':k',haxes6);
         ylabel(haxes6,'Puissance (Watt)','FontName','Times New Roman','FontSize',12);
-    catch 
+    catch
     end
 end
 
@@ -1758,17 +1762,17 @@ else
 end
 % initialisation
 try
-myFile = files{1}(1:end-4);
-ind_tag = find(myFile=='_');
-myProt = myFile(1:ind_tag(1) - 1);
-mySession = myFile(ind_tag(1) + 1 : ind_tag(2) - 1);
-mySubject = myFile(ind_tag(2) + 1 : ind_tag(3) - 1);
-myTreat = myFile(ind_tag(3) + 1 : ind_tag(4) - 1);
-if size(ind_tag,2) > 4
-    mySpeed = myFile(ind_tag(4) + 1 : ind_tag(5) - 1);
-else
-    mySpeed = myFile(ind_tag(4) + 1 : end - 4);
-end
+    myFile = files{1}(1:end-4);
+    ind_tag = find(myFile=='_');
+    myProt = myFile(1:ind_tag(1) - 1);
+    mySession = myFile(ind_tag(1) + 1 : ind_tag(2) - 1);
+    mySubject = myFile(ind_tag(2) + 1 : ind_tag(3) - 1);
+    myTreat = myFile(ind_tag(3) + 1 : ind_tag(4) - 1);
+    if size(ind_tag,2) > 4
+        mySpeed = myFile(ind_tag(4) + 1 : ind_tag(5) - 1);
+    else
+        mySpeed = myFile(ind_tag(4) + 1 : end - 4);
+    end
 catch
     myProt = 'Protocol';
     mySession = 'Session';
@@ -1908,7 +1912,7 @@ for i = 1:nb_acq
             % extraction des evts du pas notés sur Nexus (VICON)
             evts = sort(DATA.events.temps - t(1));
             Trial_TrialParams.EventsTime(2:7) = evts(1:6) + t(1);
-           
+            
         catch ERR % Détection automatique
             warning(ERR.identifier,ERR.message)
             disp(['Pas d''évènements du pas ' myFile]);
@@ -2014,7 +2018,7 @@ for i = 1:nb_acq
                 % Interpolation du vecteur dérivé (sur-échantillonnage à Fech)
                 if Fech_vid<Freq_ana
                     try
-%                         VCoM = interp1(t_vid,VCoM,t_PF);
+                        %                         VCoM = interp1(t_vid,VCoM,t_PF);
                         V_CG = interp1(t_vid,V_CG,t_PF);
                     catch ERR
                         warning(ERR.identifier,ERR.message)
@@ -2142,8 +2146,8 @@ APA.Infos.FileName = nom_fich;
 ResAPA.Infos = APA.Infos;
 TrialParams.Infos = APA.Infos;
 
-    
-    %% subject_info -Enregistrement des données sujet
+
+%% subject_info -Enregistrement des données sujet
 % --- Execute when choosing to set subject data
 function Data = subject_info(~,~,~)
 % Enregistrement des données sujet
