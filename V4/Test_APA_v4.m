@@ -645,7 +645,6 @@ if any(nom_fich ~= 0)
                 try
                     Tab.data(i,j-1) = ResAPA.Trial(i).(champs{j})(1);
                 catch
-                    Tab.data(i,j-1) = [];
                 end
             end
         end
