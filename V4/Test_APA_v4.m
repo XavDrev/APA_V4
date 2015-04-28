@@ -237,52 +237,52 @@ switch flag_afficheV
     case 1
         if flags_V(2) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
-            xlim([0 TFin])
+            xlim(haxes4,[0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         elseif flags_V(3) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            xlim([0 TFin])
+            xlim(haxes4,[0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         else %Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
-            xlim([0 TFin])
+            xlim(haxes4,[0 TFin])
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
     case 2 % 2 courbes sur 3
         if flags_V(2) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d.Data(1,1:Fin),'r-');
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d.Data(3,1:Fin),'r-');
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(3) %Courbes dérivées
             plot(haxes3,t,APA.Trial(pos).CG_Speed_d_VIC.Data(1,1:Fin),'g-');
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed_d_VIC.Data(3,1:Fin),'g-');
-            xlim([0 TFin])
+            xlim(haxes4,[0 TFin])
             afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
         if flags_V(1)%Courbes intégrées
             plot(haxes3,t,APA.Trial(pos).CG_Speed.Data(1,1:Fin)); afficheY_v2(0,':k',haxes3);
-            xlim([0 TFin])
+            xlim(haxes3,[0 TFin])
             plot(haxes4,t,APA.Trial(pos).CG_Speed.Data(3,1:Fin)); afficheY_v2(0,':k',haxes4);
-            xlim([0 TFin])
+            xlim(haxes4,[0 TFin])
             set(haxes3,'ylim',[Min_AP Max_AP]);
             set(haxes4,'ylim',[Min_Z Max_Z]);
         end
@@ -296,9 +296,9 @@ switch flag_afficheV
         
         afficheY_v2(0,':k',haxes3); afficheY_v2(0,':k',haxes4);
         set(haxes3,'ylim',[min([Min_AP Min_AP_D]) max([Max_AP Max_AP_D])]);
-        xlim([0 TFin])
+        xlim(haxes3,[0 TFin])
         set(haxes4,'ylim',[min([Min_Z Min_Z_D]) max([Max_Z Max_Z_D])]);
-        xlim([0 TFin])
+        xlim(haxes4,[0 TFin])
 end
 
 % Si affichage automatique 'On'

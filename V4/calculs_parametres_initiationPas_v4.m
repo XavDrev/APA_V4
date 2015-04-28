@@ -56,13 +56,14 @@ try
     t_0 = Trial_APA.CP_Position.Time(1);
     
     %% Identification du côté
-    [bbs,stats]=robustfit(Trial_APA.CP_Position.Time(round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)),Trial_APA.CP_Position.Data(2,round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)));
-    signe = bbs(2);
+%     [bbs,stats]=robustfit(Trial_APA.CP_Position.Time(round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)),Trial_APA.CP_Position.Data(2,round((tMarkers(2)-t_0)*Fech):round((tMarkers(4)-t_0)*Fech)));
+%     signe = bbs(2);
+    signe =  Trial_APA.CP_Position.Data(2,round((tMarkers(4)-t_0)*Fech)) - Trial_APA.CP_Position.Data(2,round((tMarkers(2)-t_0)*Fech));
     if signe>0
         Trial_Res_APA.Cote = 'Left';
     elseif signe<0
         Trial_Res_APA.Cote = 'Right';
-    else
+    elseg
         Trial_Res_APA.Cote = '';
     end
     
