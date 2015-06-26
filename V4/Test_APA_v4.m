@@ -1674,20 +1674,24 @@ liste_acq = get(findobj('Style','listbox'),'String');
 for i_acq = 1 : length(liste_acq)
     disp(['Export events pour : ' liste_acq{i_acq}]);
     try
-        if ~isempty(strfind(liste_acq{i_acq},'ON'))
-            trait = {'_ON'};
-        elseif ~isempty(strfind(liste_acq{i_acq},'OFF'))
-            trait = {'_OFF'};
+        try
+            if ~isempty(strfind(liste_acq{i_acq},'ON'))
+                trait = {'_ON'};
+            elseif ~isempty(strfind(liste_acq{i_acq},'OFF'))
+                trait = {'_OFF'};
+            end
+            ind_trait = matchcells2(liste_files,trait);
+        catch
+            ind_trait = 1:length(liste_files);
         end
-        ind_trait = matchcells2(liste_files,trait);
         if ~isempty(strfind(liste_acq{i_acq},'_MR'))
             marche = {'_MR'};
         elseif ~isempty(strfind(liste_acq{i_acq},'_MN'))
             marche = {'_MN'};
-        elseif ~isempty(strfind(liste_acq{i_acq},'_R'))
-            marche = {'_R'};
-        elseif ~isempty(strfind(liste_acq{i_acq},'_S'))
-            marche = {'_S'};
+        elseif ~isempty(strfind(liste_acq{i_acq},'_R_'))
+            marche = {'_R_'};
+        elseif ~isempty(strfind(liste_acq{i_acq},'_S_'))
+            marche = {'_S_'};
         end
         ind_marche = matchcells2(liste_files,marche);
         cpt = 3;
@@ -1720,7 +1724,7 @@ for i_acq = 1 : length(liste_acq)
         btkSetEventId(acq, 'Foot Off', 2);
         %     btkWriteAcquisition(acq,fullfile(chemin_c3d,strrep(nom_fich,'.c3d','_2.c3d')))
         btkWriteAcquisition(acq,fullfile(chemin_c3d,nom_fich))
-        disp('OK')
+        disp([nom_fich ' --> OK'])
     catch ERR
         warning(ERR.identifier,ERR.message)
     end

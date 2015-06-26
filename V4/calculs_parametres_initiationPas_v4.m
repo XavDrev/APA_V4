@@ -89,7 +89,7 @@ try
     %% Durée du 2ème pas (entre FO2 et FC2)
     Trial_Res_APA.t_step2 = tMarkers(7) - tMarkers(6);
     
-    %% Durée du cycle de marche (entre TO et FO2)
+    %% Durée du cycle de marche (entre TO et FC2)
     Trial_Res_APA.t_cycle_marche = tMarkers(7) - tMarkers(4);
     
     %% Longueur du pas
@@ -106,9 +106,9 @@ try
     Trial_Res_APA.t_VyFO1 = tMarkers(4) - t_0;
     
     %% Temps pour atteindre Vm
-    Trial_Res_APA.t_Vm =  Trial_Res_APA.Vm(1)/Fech - tMarkers(1);
+    Trial_Res_APA.t_Vm =  Trial_Res_APA.Vm(2)/Fech - tMarkers(1);
     
-    %% Vitesse Médiolatéral du CG
+    %% Vitesse Médiolatéral du C6
     Trial_Res_APA.VML_absolue = abs(mean(Trial_APA.CG_Speed.Data(2,round(tMarkers(4)*Fech):end-5)));
     
     %% Fréquence d'initiation du pas
